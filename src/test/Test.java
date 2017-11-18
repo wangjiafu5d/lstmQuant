@@ -10,6 +10,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.ujmp.core.Matrix;
 import org.ujmp.core.calculation.Calculation.Ret;
+import org.ujmp.gui.actions.SVDAction;
 
 import com.qq.mail271127035.TrainThread;
 import com.qq.mail271127035.util.FileUtil;
@@ -31,6 +32,7 @@ public class Test {
 	public static String s11;
 	public static String s12;
 	public static String s13;
+	public static String s14;
 	static {
 		initFileAddress();
 	}
@@ -66,22 +68,157 @@ public class Test {
 	public static void main(String[] args) {
 		long start_time = System.currentTimeMillis();
 		double learning_rate = FileUtil.readMatrix(s13).getAsDouble(0, 0);
-		for (int times = 0; times < 100000; times++) {
-			ExecutorService exec = Executors.newFixedThreadPool(100);
-			for (int i = 0; i < data.getRowCount() - 6; i++) {
+//		savedLoss = FileUtil.readMatrix(s14).getAsDouble(0, 0);
+//		// double learning_rate = 0.0;
+//		for (int times = 0; times < 10000; times++) {
+//			// learning_rate = Math.random() ;
+//			if (learning_rate > 50) {
+//				learning_rate = 0.01;
+//			}
+//			ExecutorService exec = Executors.newFixedThreadPool(40);
+//			for (int i = 0; i < data.getRowCount() - 6; i++) {
+//				List<Matrix> xList = new ArrayList<Matrix>();
+//				Matrix target = Matrix.Factory.rand(2, 1);
+//				for (int j = 0; j < 6; j++) {
+//					xList.add(Test.data.selectRows(Ret.LINK, i + j).transpose());
+//				}
+//				long[] column = { 1, 2 };
+//				target = Test.data.selectRows(Ret.LINK, i + 6).selectColumns(Ret.LINK, column).transpose();
+//				TrainThread t = new TrainThread();
+//				t.setI(i);
+//				t.setLearning_rate(learning_rate);
+//				t.setxList(xList);
+//				t.setTarget(target);
+//				t.setOut(false);
+//				exec.execute(t);
+//			}
+//			exec.shutdown();
+//			try {
+//				exec.awaitTermination(2, TimeUnit.MINUTES);
+//			} catch (InterruptedException e) {
+//				e.printStackTrace();
+//			}
+//			w_output = w_output.times(0.0);
+//			wf = wf.times(0.0);
+//			wi = wi.times(0.0);
+//			wc = wc.times(0.0);
+//			wo = wo.times(0.0);
+//			w_input = w_input.times(0.0);
+//			Iterator<List<Matrix>> iterator = trainedVectorLists.iterator();
+//			while (iterator.hasNext()) {
+//				List<Matrix> trained_list = iterator.next();
+//				w_output = w_output.plus(trained_list.get(0));
+//				wf = wf.plus(trained_list.get(1));
+//				wi = wi.plus(trained_list.get(2));
+//				wc = wc.plus(trained_list.get(3));
+//				wo = wo.plus(trained_list.get(4));
+//				w_input = w_input.plus(trained_list.get(5));
+//			}
+//			for (int s = 0; s < loss.size(); s++) {
+//				onceLoss += loss.get(s);
+//			}
+//			onceLoss = onceLoss / loss.size();
+//			if (savedLoss < onceLoss) {
+//				learning_rate = learning_rate * 0.95;
+//			} else {
+//				learning_rate = learning_rate * 1.05;
+//			}
+//			// System.out.println("l: "+learning_rate);
+//			savedLoss = onceLoss;
+//
+//			trainedVectorLists.clear();
+//			loss.clear();
+//
+//			double d = 1.0 / (data.getRowCount() - 6);
+//			w_output = w_output.times(d);
+//			wf = wf.times(d);
+//			wi = wi.times(d);
+//			wc = wc.times(d);
+//			wo = wo.times(d);
+//			w_input = w_input.times(d);
+//			System.out.println(onceLoss);
+//			if (onceLoss < 0.000016 || times % 2000 == 0) {
+//				saveParameters();
+//				saveRate(learning_rate);
+//				saveLoss(savedLoss);
+//				System.out.println("learning_rate: " + learning_rate);
+//			}
+//			onceLoss = 0.0;
+//		}
+//		saveParameters();
+//		saveRate(learning_rate);
+//		saveLoss(savedLoss);
+		Test test = new Test();
+		System.out.println(test.train(10000, data, learning_rate));
+		long end_time = System.currentTimeMillis();
+		System.out.println("learning_rate: " + learning_rate);
+		System.out.println("程序总共用时： " + (end_time - start_time));
+	}
+
+	public static void saveParameters() {
+		FileUtil.writeMatix(s1, w_input);
+		FileUtil.writeMatix(s3, wf);
+		FileUtil.writeMatix(s4, wi);
+		FileUtil.writeMatix(s5, wc);
+		FileUtil.writeMatix(s6, wo);
+		FileUtil.writeMatix(s11, w_output);
+	}
+
+	public static void saveRate(double rate) {
+		Matrix r = Matrix.Factory.zeros(1, 1);
+		r.setAsDouble(rate, 0, 0);
+		FileUtil.writeMatix(s13, r);
+	}
+
+	public static void saveLoss(double savedloss) {
+		Matrix r = Matrix.Factory.zeros(1, 1);
+		r.setAsDouble(savedloss, 0, 0);
+		FileUtil.writeMatix(s14, r);
+	}
+
+	public static void initFileAddress() {
+		String userName = System.getenv("USERNAME");
+		String desktop = "C:/Users/" + userName + "/Desktop";
+		s0 = desktop + "/data.txt";
+		s1 = desktop + "/LSTM/parameters/w_input.txt";
+		s2 = desktop + "/LSTM/parameters/b_input.txt";
+		s3 = desktop + "/LSTM/parameters/wf.txt";
+		s4 = desktop + "/LSTM/parameters/wi.txt";
+		s5 = desktop + "/LSTM/parameters/wc.txt";
+		s6 = desktop + "/LSTM/parameters/wo.txt";
+		s7 = desktop + "/LSTM/parameters/bf.txt";
+		s8 = desktop + "/LSTM/parameters/bi.txt";
+		s9 = desktop + "/LSTM/parameters/bc.txt";
+		s10 = desktop + "/LSTM/parameters/bo.txt";
+		s11 = desktop + "/LSTM/parameters/w_output.txt";
+		s12 = desktop + "/LSTM/parameters/b_output.txt";
+		s13 = desktop + "/LSTM/parameters/rate.txt";
+		s14 = desktop + "/LSTM/parameters/loss.txt";
+	}
+
+	public double train(int times, Matrix matrixData, double learning_rate) {
+		savedLoss = FileUtil.readMatrix(s14).getAsDouble(0, 0);
+		for (int t = 0; t < times; t++) {
+			// learning_rate = Math.random() ;
+			if (learning_rate > 50) {
+				learning_rate = 0.01;
+			}
+			ExecutorService exec = Executors.newFixedThreadPool(40);
+			for (int i = 0; i < matrixData.getRowCount() - 6; i++) {
 				List<Matrix> xList = new ArrayList<Matrix>();
 				Matrix target = Matrix.Factory.rand(2, 1);
 				for (int j = 0; j < 6; j++) {
-					xList.add(Test.data.selectRows(Ret.LINK, i + j).transpose());
+					xList.add(matrixData.selectRows(Ret.LINK, i + j).transpose());
 				}
 				long[] column = { 1, 2 };
-				target = Test.data.selectRows(Ret.LINK, i + 6).selectColumns(Ret.LINK, column).transpose();
-				TrainThread t = new TrainThread();
-				t.setI(i);
-				t.setLearning_rate(learning_rate);
-				t.setxList(xList);
-				t.setTarget(target);
-				exec.execute(t);
+				target = matrixData.selectRows(Ret.LINK, i + 6).selectColumns(Ret.LINK, column).transpose();
+				TrainThread thread = new TrainThread();
+				thread.setI(i);
+				thread.setLearning_rate(learning_rate);
+				thread.setxList(xList);
+				thread.setTarget(target);
+				thread.setOut(false);
+				exec.execute(thread);
 			}
 			exec.shutdown();
 			try {
@@ -128,66 +265,18 @@ public class Test {
 			wo = wo.times(d);
 			w_input = w_input.times(d);
 			System.out.println(onceLoss);
-			if (onceLoss < 0.000025 || times % 5000 == 0) {
-				FileUtil.writeMatix(s1, w_input);
-				FileUtil.writeMatix(s3, wf);
-				FileUtil.writeMatix(s4, wi);
-				FileUtil.writeMatix(s5, wc);
-				FileUtil.writeMatix(s6, wo);
-				FileUtil.writeMatix(s11, w_output);
-				Matrix r = Matrix.Factory.zeros(1, 1);
-				r.setAsDouble(learning_rate, 0, 0);
-				FileUtil.writeMatix(s13, r);
+			if (onceLoss < 0.000016 || t % 2000 == 0) {
+				saveParameters();
+				saveRate(learning_rate);
+				saveLoss(savedLoss);
 				System.out.println("learning_rate: " + learning_rate);
 			}
 			onceLoss = 0.0;
 		}
-		FileUtil.writeMatix(s1, w_input);
-		FileUtil.writeMatix(s3, wf);
-		FileUtil.writeMatix(s4, wi);
-		FileUtil.writeMatix(s5, wc);
-		FileUtil.writeMatix(s6, wo);
-		FileUtil.writeMatix(s11, w_output);
-		Matrix r = Matrix.Factory.zeros(1, 1);
-		r.setAsDouble(learning_rate, 0, 0);
-		FileUtil.writeMatix(s13, r);
-		long end_time = System.currentTimeMillis();
-		System.out.println("learning_rate: " + learning_rate);
-		System.out.println("程序总共用时： " + (end_time - start_time));
-	}
-
-	public void saveParameters() {
-		FileUtil.writeMatix(s1, w_input);
-		FileUtil.writeMatix(s3, wf);
-		FileUtil.writeMatix(s4, wi);
-		FileUtil.writeMatix(s5, wc);
-		FileUtil.writeMatix(s6, wo);
-		FileUtil.writeMatix(s11, w_output);
-	}
-
-	public void saveRate(double rate) {
-		Matrix r = Matrix.Factory.zeros(1, 1);
-		r.setAsDouble(rate, 0, 0);
-		FileUtil.writeMatix(s13, r);
-	}
-
-	public static void initFileAddress() {
-		String userName = System.getenv("USERNAME");
-		String desktop = "C:/Users/" + userName + "/Desktop";
-		s0 = desktop + "/data.txt";
-		s1 = desktop + "/LSTM/parameters/w_input.txt";
-		s2 = desktop + "/LSTM/parameters/b_input.txt";
-		s3 = desktop + "/LSTM/parameters/wf.txt";
-		s4 = desktop + "/LSTM/parameters/wi.txt";
-		s5 = desktop + "/LSTM/parameters/wc.txt";
-		s6 = desktop + "/LSTM/parameters/wo.txt";
-		s7 = desktop + "/LSTM/parameters/bf.txt";
-		s8 = desktop + "/LSTM/parameters/bi.txt";
-		s9 = desktop + "/LSTM/parameters/bc.txt";
-		s10 = desktop + "/LSTM/parameters/bo.txt";
-		s11 = desktop + "/LSTM/parameters/w_output.txt";
-		s12 = desktop + "/LSTM/parameters/b_output.txt";
-		s13 = desktop + "/LSTM/parameters/rate.txt";
+		saveParameters();
+		saveRate(learning_rate);
+		saveLoss(savedLoss);
+		return savedLoss;
 	}
 
 }
