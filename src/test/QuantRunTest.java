@@ -8,6 +8,7 @@ import org.ujmp.core.Matrix;
 
 import com.qq.mail271127035.BackPass;
 import com.qq.mail271127035.ForwardPass;
+import com.qq.mail271127035.LstmLayer;
 
 public class QuantRunTest {
 	public static void main(String[] args) {
@@ -69,8 +70,20 @@ public class QuantRunTest {
 				}
 				break;
 			}
-			BackPass backPass = new BackPass().build(forwardPass.getInputLayer(), forwardPass.getLstmLayer(),
-					forwardPass.getOutputLayer(), target, learning_rate);
+			LstmLayer lstmLayer = forwardPass.getLstmLayer();				
+			Matrix ct_out = lstmLayer.ct_out_list.get(lstmLayer.ct_out_list.size() - 1);			
+			Matrix ct_prev = forwardPass.getLstmLayer().ct_out_list.get(lstmLayer.ct_out_list.size() - 2);
+			Matrix ht_prev = lstmLayer.ht_out_list.get(lstmLayer.ht_out_list.size() - 2);
+			
+			List<Matrix> last_cell_result = lstmLayer.cells_result.get(lstmLayer.cells_result.size() - 1);
+			List<Matrix> momentum = new ArrayList<Matrix>();
+			momentum.add(Matrix.Factory.zeros(w_output.getRowCount(),w_output.getColumnCount()));
+			momentum.add(Matrix.Factory.zeros(w_hidden_list.get(0).getRowCount(),w_hidden_list.get(0).getColumnCount()));
+			momentum.add(Matrix.Factory.zeros(w_hidden_list.get(0).getRowCount(),w_hidden_list.get(0).getColumnCount()));
+			momentum.add(Matrix.Factory.zeros(w_hidden_list.get(0).getRowCount(),w_hidden_list.get(0).getColumnCount()));
+			momentum.add(Matrix.Factory.zeros(w_hidden_list.get(0).getRowCount(),w_hidden_list.get(0).getColumnCount()));
+			momentum.add(Matrix.Factory.zeros(w_input.getRowCount(),w_input.getColumnCount()));
+			BackPass backPass = new BackPass().build(ht, out, ct_out, ct_prev, ht_prev, last_cell_result, momentum, target, learning_rate);
 			trained_list = backPass.backTrain(w_output, w_hidden_list, w_input, xList);
 			// for (Iterator iterator = trained_list.iterator(); iterator.hasNext();) {
 			// Matrix matrix = (Matrix) iterator.next();

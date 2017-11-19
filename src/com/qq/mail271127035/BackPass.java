@@ -16,12 +16,17 @@ import com.qq.mail271127035.util.MathUtil;
  * @version 1.0
  */
 public class BackPass {
-	
+
 	public List<Matrix> xList = new ArrayList<Matrix>();
 	public List<Matrix> bList = new ArrayList<Matrix>();
-	public InputLayer inputLayer;
-	public LstmLayer lstmLayer;
-	public OutputLayer outputLayer;
+	public List<Matrix> momentum = new ArrayList<Matrix>();
+	public List<Matrix> vt = new ArrayList<Matrix>();
+	public Matrix ht;
+	public Matrix out;
+	public Matrix ct_out;
+	public Matrix ct_prev;
+	public Matrix ht_prev;
+	public List<Matrix> last_cell_result;
 	public Matrix target;
 	public Double eta;
 	public Matrix delta_ht;
@@ -46,88 +51,42 @@ public class BackPass {
 		return wList;
 	}
 
-	public  BackPass build(final InputLayer inputLayer, final LstmLayer lstmLayer, final OutputLayer outputLayer,
-			final Matrix target, final Double eta) {
+	public BackPass build(final Matrix ht, final Matrix out, final Matrix ct_out, final Matrix ct_prev,
+			final Matrix ht_prev, final List<Matrix> last_cell_result,final List<Matrix> momentum, final Matrix target, final Double eta) {
 		BackPass backPass = new BackPass();
-		backPass.inputLayer = inputLayer;
-		backPass.lstmLayer = lstmLayer;
-		backPass.outputLayer = outputLayer;
+		backPass.ht = ht;
+		backPass.out = out;
+		backPass.ct_out = ct_out;
+		backPass.ct_prev = ct_prev;
+		backPass.ht_prev = ht_prev;
+		backPass.last_cell_result = last_cell_result;
+		backPass.momentum = momentum;
 		backPass.target = target;
 		backPass.eta = eta;
 		return backPass;
 	}
 
 	private Matrix backTrainOutputLayer(final Matrix w_output) {
-		Matrix ht = lstmLayer.ht_out_list.get(lstmLayer.ht_out_list.size() - 1);
-		delta_ht = Matrix.Factory.zeros(ht.getRowCount(), ht.getColumnCount());
-		Matrix delta_out = outputLayer.out.minus(target);
+		
+		delta_ht = Matrix.Factory.zeros(ht.getRowCount(), ht.getColumnCount());		
+		Matrix delta_out = out.minus(target);
 		Matrix delta_elu = Matrix.Factory.zeros(delta_out.getRowCount(), delta_out.getColumnCount());
 		Matrix grad_node = Matrix.Factory.zeros(w_output.getRowCount(), w_output.getColumnCount());
-		delta_elu = MathUtil.derivativeElu(outputLayer.out);
-		// System.out.println("delta: "+delta_elu);
-		// grad_node = delta_out.mtimes(ht);
-		// Double sum = 0.0;
-		// for (int i = 0; i < grad_node.getRowCount(); i++) {
-		// for (int j = 0; j < grad_node.getColumnCount(); j++) {
-		// sum = sum + Math.abs(grad_node.getAsDouble(i, j));
-		// }
-		// }
-		// if (sum <0.000001) {
-		// ht = Matrix.Factory.rand(ht.getRowCount(),ht.getColumnCount());
-		// }
+		delta_elu = MathUtil.derivativeElu(out);
 		grad_node = MathUtil.hadamard(delta_out, delta_elu).mtimes(ht);
-		
+
 		delta_ht = MathUtil.hadamard(delta_out, delta_elu).transpose().mtimes(w_output);
 		delta_ht = MathUtil.gradCheck(delta_ht);
-		// Double sum = 0.0;
-		// for (int i = 0; i < grad_node.getRowCount(); i++) {
-		// for (int j = 0; j < grad_node.getColumnCount(); j++) {
-		// sum = sum + Math.abs(grad_node.getAsDouble(i, j));
-		// }
-		// }
-		// if (sum < 0.00001) {
-		// System.out.println("sum: " + sum);
-		// System.out.println(grad_node);
-		// // grad_node = grad_node.times(10);
-		//// grad_node = Matrix.Factory.randn(w_output.getRowCount(),
-		// w_output.getColumnCount()).times(10);
-		//// delta_ht =
-		// Matrix.Factory.randn(delta_out.getColumnCount(),w_output.getColumnCount()).times(0.1);
-		// return Matrix.Factory.ones(w_output.getRowCount(),w_output.getColumnCount());
-		// } else {
-		// if (sum > 10) {
-		// grad_node = Matrix.Factory.randn(w_output.getRowCount(),
-		// w_output.getColumnCount()).times(0.1);
-		//// delta_ht =
-		// Matrix.Factory.randn(delta_out.getColumnCount(),w_output.getColumnCount()).times(10);
-		// return Matrix.Factory.ones(w_output.getRowCount(),w_output.getColumnCount());
-		// }
-		// }
-		// if (sum < 0.000001) {
-		// delta_ht =
-		// Matrix.Factory.ones(delta_out.getColumnCount(),w_output.getColumnCount());
-		// } else {
-		// delta_ht = MathUtil.hadamard(delta_out,
-		// delta_elu).transpose().mtimes(w_output);
-		// }
-		//
-		// System.out.println("grad_node: \r\n"+grad_node);
-		// System.out.println("grad_node: " + grad_node);
-		return MathUtil.gradTrain(w_output, grad_node, eta);
+		Matrix v = momentum.get(0).times(0.9).plus(grad_node.times(eta));
+		vt.add(v);
+		return MathUtil.gradTrain(w_output, v, 1.0);
 	}
 
 	private List<Matrix> backTrainHiddenLayer(final List<Matrix> w_hidden_list) {
 		List<Matrix> new_w_list = new ArrayList<Matrix>();
-		//
-		// lstm层的最后一个Ct输出
-		Matrix ct_out = lstmLayer.ct_out_list.get(lstmLayer.ct_out_list.size() - 1);
-		// 前一个lstm单元的输出Ct-1，ht-1作为本lstm单元的输入
-		Matrix ct_prev = lstmLayer.ct_out_list.get(lstmLayer.ct_out_list.size() - 2);
-		Matrix ht_prev = lstmLayer.ht_out_list.get(lstmLayer.ht_out_list.size() - 2);
+		
 		// 最后一个lstm单元的输入Xt
-		Matrix xt = xList.get(xList.size() - 1);
-		// 最后一次Xt输入lstm单元计算中的所有结果
-		List<Matrix> last_cell_result = lstmLayer.cells_result.get(lstmLayer.cells_result.size() - 1);
+		Matrix xt = xList.get(xList.size() - 1);		
 		// 最后一次lstmCell计算的ft,it,ct_cell,ot
 		Matrix ft = last_cell_result.get(0);
 		Matrix it = last_cell_result.get(1);
@@ -151,28 +110,36 @@ public class BackPass {
 		// grad_wf = delta_ct_out*Ct-1*ft*(1-ft)×([ht-1,xt]转置)
 		Matrix ele1 = Matrix.Factory.ones(ft.getRowCount(), ft.getColumnCount()).minus(ft);
 		// System.out.println("in_trans "+in_trans);
-		Matrix grad_wf = MathUtil.seriesHadamard(delta_ct_out, ct_prev, ft, ele1).mtimes(in_trans);		
-		Matrix new_wf = MathUtil.gradTrain(w_hidden_list.get(0), grad_wf, eta);
+		Matrix grad_wf = MathUtil.seriesHadamard(delta_ct_out, ct_prev, ft, ele1).mtimes(in_trans);
+		Matrix vf = momentum.get(1).times(0.9).plus(grad_wf.times(eta));
+		vt.add(vf);
+		Matrix new_wf = MathUtil.gradTrain(w_hidden_list.get(0), vf, 1.0);
 
 		new_w_list.add(new_wf);
 		// 求训练得到的new_wi
 		// grad_wi = delta_ct_out*Ct_cell*it*(1-it)×([ht-1,xt]转置)
 		Matrix ele2 = Matrix.Factory.ones(it.getRowCount(), it.getColumnCount()).minus(it);
 		Matrix grad_wi = MathUtil.seriesHadamard(delta_ct_out, ct_cell, it, ele2).mtimes(in_trans);
-		Matrix new_wi = MathUtil.gradTrain(w_hidden_list.get(1), grad_wi, eta);
+		Matrix vi = momentum.get(2).times(0.9).plus(grad_wi.times(eta));
+		vt.add(vi);
+		Matrix new_wi = MathUtil.gradTrain(w_hidden_list.get(1), vi, 1.0);
 		new_w_list.add(new_wi);
 		// 求训练得到的new_wc
 		// grad_wc = delta_ct_out*it*(1-ct_cell^2)×([ht-1,xt]转置)
 		Matrix ele3 = Matrix.Factory.ones(ct_cell.getRowCount(), ct_cell.getColumnCount())
 				.minus(MathUtil.hadamard(ct_cell, ct_cell));
 		Matrix grad_wc = MathUtil.seriesHadamard(delta_ct_out, it, ele3).mtimes(in_trans);
-		Matrix new_wc = MathUtil.gradTrain(w_hidden_list.get(2), grad_wc, eta);
+		Matrix vc = momentum.get(3).times(0.9).plus(grad_wc.times(eta));
+		vt.add(vc);
+		Matrix new_wc = MathUtil.gradTrain(w_hidden_list.get(2), vc, 1.0);
 		new_w_list.add(new_wc);
 		// 求训练得到的new_wo
 		// grad_wo = delta_ht*tanh(Ct)*ot(1-ot)*×([ht-1,xt]转置)
 		Matrix ele4 = Matrix.Factory.ones(ot.getRowCount(), ot.getColumnCount()).minus(ot);
 		Matrix grad_wo = MathUtil.seriesHadamard(delta_ht, MathUtil.tanh(ct_out), ot, ele4).mtimes(in_trans);
-		Matrix new_wo = MathUtil.gradTrain(w_hidden_list.get(3), grad_wo, eta);
+		Matrix vo = momentum.get(4).times(0.9).plus(grad_wo.times(eta));
+		vt.add(vo);
+		Matrix new_wo = MathUtil.gradTrain(w_hidden_list.get(3), vo, 1.0);
 		new_w_list.add(new_wo);
 		// 求训练得到的xt的梯度
 		// grad_xt_o = delta_ht*tanh(Ct)*ot*(1-ot)*wo(0,0)
@@ -199,13 +166,18 @@ public class BackPass {
 			// System.out.println("delta "+delta_xt.transpose());
 			// System.err.println(xLis);
 			grad_w_input = delta_xt.transpose().mtimes(xList.get(xList.size() - 1));
-			result = MathUtil.gradTrain(w_input, grad_w_input, eta);
-//			System.out.println("eta "+eta);
+			Matrix v = momentum.get(5).times(0.9).plus(grad_w_input.times(eta));
+			vt.add(v);
+			result = MathUtil.gradTrain(w_input, v, 1.0);
+			// System.out.println("eta "+eta);
 		} else {
 			System.out.println("程序执行顺序问题，grad_xt为空指针");
 		}
 		return result;
 	}
 
-	
+	public List<Matrix> getVt() {
+		return vt;
+	}
+
 }

@@ -12,6 +12,7 @@ import org.ujmp.core.Matrix;
 import org.ujmp.core.calculation.Calculation.Ret;
 import org.ujmp.gui.actions.SVDAction;
 
+import com.qq.mail271127035.ForwardPass;
 import com.qq.mail271127035.TrainThread;
 import com.qq.mail271127035.util.FileUtil;
 
@@ -53,6 +54,7 @@ public class Test {
 	public static List<Matrix> w_hidden_list = new ArrayList<Matrix>();
 	public static List<Matrix> b_hidden_list = new ArrayList<Matrix>();
 	public static List<List<Matrix>> trainedVectorLists = new Vector<List<Matrix>>();
+	public static List<List<Matrix>> vt = new Vector<List<Matrix>>();
 	public static List<Double> loss = new Vector<Double>();
 	static {
 		w_hidden_list.add(wf);
@@ -67,9 +69,26 @@ public class Test {
 
 	public static void main(String[] args) {
 		long start_time = System.currentTimeMillis();
-		double learning_rate = FileUtil.readMatrix(s13).getAsDouble(0, 0);		
+		double learning_rate = FileUtil.readMatrix(s13).getAsDouble(0, 0);
 		Test test = new Test();
-		System.out.println(test.train(10000, data, learning_rate));
+		long[] rows = new long[256];
+		for (int i = 0; i < rows.length; i++) {
+			rows[i] = i;
+		}
+		Matrix matrix = data.selectRows(Ret.LINK, rows);
+
+		System.out.println(test.train(100000, matrix, 0.05));
+
+		List<Matrix> xList = new ArrayList<Matrix>();
+		for (int j = 0; j < 6; j++) {
+			xList.add(matrix.selectRows(Ret.LINK, matrix.getRowCount() - 6 + j).transpose());
+		}
+		ForwardPass forwardPass = new ForwardPass();
+		forwardPass.add_w_input(Test.w_input).add_b_input(Test.b_input).add_w_hidden_list(Test.w_hidden_list)
+				.add_b_hidden_list(Test.b_hidden_list).add_w_output(Test.w_output).add_b_output(Test.b_output)
+				.add_xList(xList);
+		forwardPass.run();
+		System.out.println(forwardPass.getOutputLayer().getOut().transpose());
 		long end_time = System.currentTimeMillis();
 		System.out.println("learning_rate: " + learning_rate);
 		System.out.println("程序总共用时： " + (end_time - start_time));
@@ -118,11 +137,14 @@ public class Test {
 
 	public double train(int times, Matrix matrixData, double learning_rate) {
 		savedLoss = FileUtil.readMatrix(s14).getAsDouble(0, 0);
+		List<Matrix> momentum = new ArrayList<Matrix>();
+		momentum.add(Matrix.Factory.zeros(w_output.getRowCount(), w_output.getColumnCount()));
+		momentum.add(Matrix.Factory.zeros(w_hidden_list.get(0).getRowCount(), w_hidden_list.get(0).getColumnCount()));
+		momentum.add(Matrix.Factory.zeros(w_hidden_list.get(0).getRowCount(), w_hidden_list.get(0).getColumnCount()));
+		momentum.add(Matrix.Factory.zeros(w_hidden_list.get(0).getRowCount(), w_hidden_list.get(0).getColumnCount()));
+		momentum.add(Matrix.Factory.zeros(w_hidden_list.get(0).getRowCount(), w_hidden_list.get(0).getColumnCount()));
+		momentum.add(Matrix.Factory.zeros(w_input.getRowCount(), w_input.getColumnCount()));
 		for (int t = 0; t < times; t++) {
-			// learning_rate = Math.random() ;
-			if (learning_rate > 50) {
-				learning_rate = 0.01;
-			}
 			ExecutorService exec = Executors.newFixedThreadPool(40);
 			for (int i = 0; i < matrixData.getRowCount() - 6; i++) {
 				List<Matrix> xList = new ArrayList<Matrix>();
@@ -137,6 +159,7 @@ public class Test {
 				thread.setLearning_rate(learning_rate);
 				thread.setxList(xList);
 				thread.setTarget(target);
+				thread.setMomentum(momentum);
 				thread.setOut(false);
 				exec.execute(thread);
 			}
@@ -166,24 +189,48 @@ public class Test {
 				onceLoss += loss.get(s);
 			}
 			onceLoss = onceLoss / loss.size();
-			if (savedLoss < onceLoss) {
-				learning_rate = learning_rate * 0.95;
-			} else {
-				learning_rate = learning_rate * 1.05;
-			}
+			// if (savedLoss < onceLoss) {
+			// learning_rate = learning_rate * 0.97;
+			// } else {
+			// learning_rate = learning_rate * 1.03;
+			// }
 			// System.out.println("l: "+learning_rate);
 			savedLoss = onceLoss;
-
+			Matrix v_out = Matrix.Factory.zeros(2, 6);
+			Matrix vf = Matrix.Factory.zeros(1, 2);
+			Matrix vi = Matrix.Factory.zeros(1, 2);
+			Matrix vc = Matrix.Factory.zeros(1, 2);
+			Matrix vo = Matrix.Factory.zeros(1, 2);
+			Matrix v_in = Matrix.Factory.zeros(6, 6);
+			Iterator<List<Matrix>> vt_iterator = vt.iterator();
+			while (vt_iterator.hasNext()) {
+				List<Matrix> vt_list = vt_iterator.next();
+				v_out = v_out.plus(vt_list.get(0));
+				vf = vf.plus(vt_list.get(1));
+				vi = vi.plus(vt_list.get(2));
+				vc = vc.plus(vt_list.get(3));
+				vo = vo.plus(vt_list.get(4));
+				v_in = v_in.plus(vt_list.get(5));
+			}
 			trainedVectorLists.clear();
 			loss.clear();
+			vt.clear();
+			momentum.clear();
 
-			double d = 1.0 / (data.getRowCount() - 6);
+			double d = 1.0 / (matrixData.getRowCount() - 6);
 			w_output = w_output.times(d);
 			wf = wf.times(d);
 			wi = wi.times(d);
 			wc = wc.times(d);
 			wo = wo.times(d);
 			w_input = w_input.times(d);
+			
+			momentum.add(v_out.times(d));
+			momentum.add(vf.times(d));
+			momentum.add(vi.times(d));
+			momentum.add(vc.times(d));
+			momentum.add(vo.times(d));
+			momentum.add(v_in.times(d));
 			System.out.println(onceLoss);
 			if (onceLoss < 0.000016 || t % 2000 == 0) {
 				saveParameters();
