@@ -69,7 +69,7 @@ public class Test {
 
 	public static void main(String[] args) {
 		long start_time = System.currentTimeMillis();
-		double learning_rate = FileUtil.readMatrix(s13).getAsDouble(0, 0);
+		double rate = FileUtil.readMatrix(s13).getAsDouble(0, 0);
 		Test test = new Test();
 		long[] rows = new long[256];
 		for (int i = 0; i < rows.length; i++) {
@@ -90,7 +90,7 @@ public class Test {
 		forwardPass.run();
 		System.out.println(forwardPass.getOutputLayer().getOut().transpose());
 		long end_time = System.currentTimeMillis();
-		System.out.println("learning_rate: " + learning_rate);
+		System.out.println("learning_rate: " + rate);
 		System.out.println("程序总共用时： " + (end_time - start_time));
 	}
 
@@ -169,68 +169,72 @@ public class Test {
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
-			w_output = w_output.times(0.0);
-			wf = wf.times(0.0);
-			wi = wi.times(0.0);
-			wc = wc.times(0.0);
-			wo = wo.times(0.0);
-			w_input = w_input.times(0.0);
-			Iterator<List<Matrix>> iterator = trainedVectorLists.iterator();
-			while (iterator.hasNext()) {
-				List<Matrix> trained_list = iterator.next();
-				w_output = w_output.plus(trained_list.get(0));
-				wf = wf.plus(trained_list.get(1));
-				wi = wi.plus(trained_list.get(2));
-				wc = wc.plus(trained_list.get(3));
-				wo = wo.plus(trained_list.get(4));
-				w_input = w_input.plus(trained_list.get(5));
-			}
+			
+			
+			
 			for (int s = 0; s < loss.size(); s++) {
 				onceLoss += loss.get(s);
 			}
 			onceLoss = onceLoss / loss.size();
-			// if (savedLoss < onceLoss) {
-			// learning_rate = learning_rate * 0.97;
-			// } else {
-			// learning_rate = learning_rate * 1.03;
-			// }
-			// System.out.println("l: "+learning_rate);
-			savedLoss = onceLoss;
-			Matrix v_out = Matrix.Factory.zeros(2, 6);
-			Matrix vf = Matrix.Factory.zeros(1, 2);
-			Matrix vi = Matrix.Factory.zeros(1, 2);
-			Matrix vc = Matrix.Factory.zeros(1, 2);
-			Matrix vo = Matrix.Factory.zeros(1, 2);
-			Matrix v_in = Matrix.Factory.zeros(6, 6);
-			Iterator<List<Matrix>> vt_iterator = vt.iterator();
-			while (vt_iterator.hasNext()) {
-				List<Matrix> vt_list = vt_iterator.next();
-				v_out = v_out.plus(vt_list.get(0));
-				vf = vf.plus(vt_list.get(1));
-				vi = vi.plus(vt_list.get(2));
-				vc = vc.plus(vt_list.get(3));
-				vo = vo.plus(vt_list.get(4));
-				v_in = v_in.plus(vt_list.get(5));
+			if (onceLoss   >  savedLoss ) {				  
+				learning_rate = learning_rate * 0.9;	
+			} else {
+				learning_rate = learning_rate * 1.05;
+				w_output = w_output.times(0.0);
+				wf = wf.times(0.0);
+				wi = wi.times(0.0);
+				wc = wc.times(0.0);
+				wo = wo.times(0.0);
+				w_input = w_input.times(0.0);
+				Iterator<List<Matrix>> iterator = trainedVectorLists.iterator();
+				while (iterator.hasNext()) {
+					List<Matrix> trained_list = iterator.next();
+					w_output = w_output.plus(trained_list.get(0));
+					wf = wf.plus(trained_list.get(1));
+					wi = wi.plus(trained_list.get(2));
+					wc = wc.plus(trained_list.get(3));
+					wo = wo.plus(trained_list.get(4));
+					w_input = w_input.plus(trained_list.get(5));
+				}
+				Matrix v_out = Matrix.Factory.zeros(2, 6);
+				Matrix vf = Matrix.Factory.zeros(1, 2);
+				Matrix vi = Matrix.Factory.zeros(1, 2);
+				Matrix vc = Matrix.Factory.zeros(1, 2);
+				Matrix vo = Matrix.Factory.zeros(1, 2);
+				Matrix v_in = Matrix.Factory.zeros(6, 6);
+				Iterator<List<Matrix>> vt_iterator = vt.iterator();
+				while (vt_iterator.hasNext()) {
+					List<Matrix> vt_list = vt_iterator.next();
+					v_out = v_out.plus(vt_list.get(0));
+					vf = vf.plus(vt_list.get(1));
+					vi = vi.plus(vt_list.get(2));
+					vc = vc.plus(vt_list.get(3));
+					vo = vo.plus(vt_list.get(4));
+					v_in = v_in.plus(vt_list.get(5));
+				}
+				momentum.clear();
+				double d = 1.0 / (matrixData.getRowCount() - 6);
+				w_output = w_output.times(d);			
+				wf = wf.times(d);
+				wi = wi.times(d);
+				wc = wc.times(d);
+				wo = wo.times(d);
+				w_input = w_input.times(d);
+
+				momentum.add(v_out.times(d));
+				momentum.add(vf.times(d));
+				momentum.add(vi.times(d));
+				momentum.add(vc.times(d));
+				momentum.add(vo.times(d));
+				momentum.add(v_in.times(d));
 			}
+			// System.out.println("l: "+learning_rate);
+			
 			trainedVectorLists.clear();
 			loss.clear();
-			vt.clear();
-			momentum.clear();
-
-			double d = 1.0 / (matrixData.getRowCount() - 6);
-			w_output = w_output.times(d);
-			wf = wf.times(d);
-			wi = wi.times(d);
-			wc = wc.times(d);
-			wo = wo.times(d);
-			w_input = w_input.times(d);
+			vt.clear();			
+			savedLoss = onceLoss;
 			
-			momentum.add(v_out.times(d));
-			momentum.add(vf.times(d));
-			momentum.add(vi.times(d));
-			momentum.add(vc.times(d));
-			momentum.add(vo.times(d));
-			momentum.add(v_in.times(d));
 			System.out.println(onceLoss);
 			if (onceLoss < 0.000016 || t % 2000 == 0) {
 				saveParameters();

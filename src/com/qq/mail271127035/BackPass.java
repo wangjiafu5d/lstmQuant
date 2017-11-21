@@ -31,6 +31,7 @@ public class BackPass {
 	public Double eta;
 	public Matrix delta_ht;
 	public Matrix delta_xt;
+	public double r = 0.9;
 
 	public List<Matrix> backTrain(final Matrix w_output, final List<Matrix> w_hidden_list, final Matrix w_input,
 			final List<Matrix> xList) {
@@ -77,7 +78,7 @@ public class BackPass {
 
 		delta_ht = MathUtil.hadamard(delta_out, delta_elu).transpose().mtimes(w_output);
 		delta_ht = MathUtil.gradCheck(delta_ht);
-		Matrix v = momentum.get(0).times(0.9).plus(grad_node.times(eta));
+		Matrix v = momentum.get(0).times(r).plus(grad_node.times(eta));
 		vt.add(v);
 		return MathUtil.gradTrain(w_output, v, 1.0);
 	}
@@ -111,7 +112,7 @@ public class BackPass {
 		Matrix ele1 = Matrix.Factory.ones(ft.getRowCount(), ft.getColumnCount()).minus(ft);
 		// System.out.println("in_trans "+in_trans);
 		Matrix grad_wf = MathUtil.seriesHadamard(delta_ct_out, ct_prev, ft, ele1).mtimes(in_trans);
-		Matrix vf = momentum.get(1).times(0.9).plus(grad_wf.times(eta));
+		Matrix vf = momentum.get(1).times(r).plus(grad_wf.times(eta));
 		vt.add(vf);
 		Matrix new_wf = MathUtil.gradTrain(w_hidden_list.get(0), vf, 1.0);
 
@@ -120,7 +121,7 @@ public class BackPass {
 		// grad_wi = delta_ct_out*Ct_cell*it*(1-it)×([ht-1,xt]转置)
 		Matrix ele2 = Matrix.Factory.ones(it.getRowCount(), it.getColumnCount()).minus(it);
 		Matrix grad_wi = MathUtil.seriesHadamard(delta_ct_out, ct_cell, it, ele2).mtimes(in_trans);
-		Matrix vi = momentum.get(2).times(0.9).plus(grad_wi.times(eta));
+		Matrix vi = momentum.get(2).times(r).plus(grad_wi.times(eta));
 		vt.add(vi);
 		Matrix new_wi = MathUtil.gradTrain(w_hidden_list.get(1), vi, 1.0);
 		new_w_list.add(new_wi);
@@ -129,7 +130,7 @@ public class BackPass {
 		Matrix ele3 = Matrix.Factory.ones(ct_cell.getRowCount(), ct_cell.getColumnCount())
 				.minus(MathUtil.hadamard(ct_cell, ct_cell));
 		Matrix grad_wc = MathUtil.seriesHadamard(delta_ct_out, it, ele3).mtimes(in_trans);
-		Matrix vc = momentum.get(3).times(0.9).plus(grad_wc.times(eta));
+		Matrix vc = momentum.get(3).times(r).plus(grad_wc.times(eta));
 		vt.add(vc);
 		Matrix new_wc = MathUtil.gradTrain(w_hidden_list.get(2), vc, 1.0);
 		new_w_list.add(new_wc);
@@ -137,7 +138,7 @@ public class BackPass {
 		// grad_wo = delta_ht*tanh(Ct)*ot(1-ot)*×([ht-1,xt]转置)
 		Matrix ele4 = Matrix.Factory.ones(ot.getRowCount(), ot.getColumnCount()).minus(ot);
 		Matrix grad_wo = MathUtil.seriesHadamard(delta_ht, MathUtil.tanh(ct_out), ot, ele4).mtimes(in_trans);
-		Matrix vo = momentum.get(4).times(0.9).plus(grad_wo.times(eta));
+		Matrix vo = momentum.get(4).times(r).plus(grad_wo.times(eta));
 		vt.add(vo);
 		Matrix new_wo = MathUtil.gradTrain(w_hidden_list.get(3), vo, 1.0);
 		new_w_list.add(new_wo);
@@ -166,7 +167,7 @@ public class BackPass {
 			// System.out.println("delta "+delta_xt.transpose());
 			// System.err.println(xLis);
 			grad_w_input = delta_xt.transpose().mtimes(xList.get(xList.size() - 1));
-			Matrix v = momentum.get(5).times(0.9).plus(grad_w_input.times(eta));
+			Matrix v = momentum.get(5).times(r).plus(grad_w_input.times(eta));
 			vt.add(v);
 			result = MathUtil.gradTrain(w_input, v, 1.0);
 			// System.out.println("eta "+eta);
