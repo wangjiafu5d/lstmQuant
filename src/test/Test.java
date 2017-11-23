@@ -69,29 +69,63 @@ public class Test {
 
 	public static void main(String[] args) {
 		long start_time = System.currentTimeMillis();
+		predict(42);	
+		long end_time = System.currentTimeMillis();
+		System.out.println("程序总共用时： " + (end_time - start_time));
+	}
+
+	public static void predict(int stepLength) {
 		double rate = FileUtil.readMatrix(s13).getAsDouble(0, 0);
 		Test test = new Test();
-		long[] rows = new long[256];
-		for (int i = 0; i < rows.length; i++) {
-			rows[i] = i;
-		}
-		Matrix matrix = data.selectRows(Ret.LINK, rows);
+		long[] rows = new long[stepLength];
+		for (int step = 0; step < 250; step++) {
+			for (int i = 0; i < rows.length; i++) {
+				rows[i] = 213 + i + step;
+			}
+			Matrix matrix = data.selectRows(Ret.LINK, rows);
+			double loss = test.train(40000, matrix, rate);
 
-		System.out.println(test.train(100000, matrix, 0.05));
-
-		List<Matrix> xList = new ArrayList<Matrix>();
-		for (int j = 0; j < 6; j++) {
-			xList.add(matrix.selectRows(Ret.LINK, matrix.getRowCount() - 6 + j).transpose());
+			List<Matrix> xList = new ArrayList<Matrix>();
+			for (int j = 0; j < 6; j++) {
+				xList.add(matrix.selectRows(Ret.LINK, matrix.getRowCount() - 6 + j).transpose());
+			}
+			ForwardPass forwardPass = new ForwardPass();
+			forwardPass.add_w_input(Test.w_input).add_b_input(Test.b_input).add_w_hidden_list(Test.w_hidden_list)
+					.add_b_hidden_list(Test.b_hidden_list).add_w_output(Test.w_output).add_b_output(Test.b_output)
+					.add_xList(xList);
+			forwardPass.run();
+			System.out.println(forwardPass.getOutputLayer().getOut().transpose().toString().trim() + " " + loss);
 		}
-		ForwardPass forwardPass = new ForwardPass();
-		forwardPass.add_w_input(Test.w_input).add_b_input(Test.b_input).add_w_hidden_list(Test.w_hidden_list)
-				.add_b_hidden_list(Test.b_hidden_list).add_w_output(Test.w_output).add_b_output(Test.b_output)
-				.add_xList(xList);
-		forwardPass.run();
-		System.out.println(forwardPass.getOutputLayer().getOut().transpose());
-		long end_time = System.currentTimeMillis();
-		System.out.println("learning_rate: " + rate);
-		System.out.println("程序总共用时： " + (end_time - start_time));
+
+	}
+
+	public static void miniSgd(Matrix data, int stepLength, int times) {
+		double rate = FileUtil.readMatrix(s13).getAsDouble(0, 0);
+		Test test = new Test();
+		long[] rows = new long[stepLength];
+		for (int j = 0; j < data.getRowCount() - stepLength + 1; j++) {
+			for (int i = 0; i < stepLength; i++) {
+				rows[i] = i + j;
+			}
+			Matrix matrix = data.selectRows(Ret.LINK, rows);
+			System.out.println(test.train(times, matrix, rate));
+		}
+
+	}
+
+	public static void outAllResult() {
+		for (int t = 0; t < data.getRowCount() - 6; t++) {
+			List<Matrix> xList = new ArrayList<Matrix>();
+			for (int j = 0; j < 6; j++) {
+				xList.add(data.selectRows(Ret.LINK, j + t).transpose());
+			}
+			ForwardPass forwardPass = new ForwardPass();
+			forwardPass.add_w_input(Test.w_input).add_b_input(Test.b_input).add_w_hidden_list(Test.w_hidden_list)
+					.add_b_hidden_list(Test.b_hidden_list).add_w_output(Test.w_output).add_b_output(Test.b_output)
+					.add_xList(xList);
+			forwardPass.run();
+			System.out.println(forwardPass.getOutputLayer().getOut().transpose().toString().trim());
+		}
 	}
 
 	public static void saveParameters() {
@@ -118,7 +152,7 @@ public class Test {
 	public static void initFileAddress() {
 		String userName = System.getenv("USERNAME");
 		String desktop = "C:/Users/" + userName + "/Desktop";
-		s0 = desktop + "/data.txt";
+		s0 = desktop + "/data4.txt";
 		s1 = desktop + "/LSTM/parameters/w_input.txt";
 		s2 = desktop + "/LSTM/parameters/b_input.txt";
 		s3 = desktop + "/LSTM/parameters/wf.txt";
@@ -169,15 +203,13 @@ public class Test {
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
-			
-			
-			
+
 			for (int s = 0; s < loss.size(); s++) {
 				onceLoss += loss.get(s);
 			}
 			onceLoss = onceLoss / loss.size();
-			if (onceLoss   >  savedLoss ) {				  
-				learning_rate = learning_rate * 0.9;	
+			if (onceLoss > savedLoss) {
+				learning_rate = learning_rate * 0.9;
 			} else {
 				learning_rate = learning_rate * 1.05;
 				w_output = w_output.times(0.0);
@@ -214,7 +246,7 @@ public class Test {
 				}
 				momentum.clear();
 				double d = 1.0 / (matrixData.getRowCount() - 6);
-				w_output = w_output.times(d);			
+				w_output = w_output.times(d);
 				wf = wf.times(d);
 				wi = wi.times(d);
 				wc = wc.times(d);
@@ -229,18 +261,18 @@ public class Test {
 				momentum.add(v_in.times(d));
 			}
 			// System.out.println("l: "+learning_rate);
-			
+
 			trainedVectorLists.clear();
 			loss.clear();
-			vt.clear();			
+			vt.clear();
 			savedLoss = onceLoss;
-			
-			System.out.println(onceLoss);
-			if (onceLoss < 0.000016 || t % 2000 == 0) {
+
+			// System.out.println(onceLoss);
+			if (onceLoss < 0.000006 || t % 2000 == 0) {
 				saveParameters();
 				saveRate(learning_rate);
 				saveLoss(savedLoss);
-				System.out.println("learning_rate: " + learning_rate);
+
 			}
 			onceLoss = 0.0;
 		}
