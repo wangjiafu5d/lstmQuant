@@ -26,10 +26,10 @@ public class FileUtil {
 				String line = null;
 				while ((line = br.readLine()) != null) {
 					List<Double> l = new ArrayList<Double>();
-					Pattern p = Pattern.compile("[-]{0,1}\\d+\\.{1}\\d+");
+					Pattern p = Pattern.compile("[-]{0,1}\\d+\\.{1}\\S+");
 					Matcher m = p.matcher(line);
 					while (m.find()) {
-						// System.out.println(m.group());
+//						 System.out.println(m.group());
 						l.add(Double.valueOf(m.group()));
 					}
 					if (l.size() > 0) {
@@ -49,10 +49,19 @@ public class FileUtil {
 			}
 			System.out.println("文件地址有误");
 		}
+		if (list.size() == 0) {
+			System.out.println("没有在指定文件中读取到矩阵数据，请检查文件");
+			try {
+				throw new Exception();
+			} catch (Exception e) {				
+				e.printStackTrace();
+			}
+		}
 		Matrix matrix = Matrix.Factory.zeros(list.size(), list.get(0).size());
+//		System.out.println(list.size()+" " + list.get(0).size());
 		for (int row = 0; row < list.size(); row++) {
 			for (int column = 0; column < list.get(0).size(); column++) {
-				// System.out.println(row+" "+" "+column);
+//				 System.out.println(row+" "+" "+column);
 				matrix.setAsDouble(list.get(row).get(column), row, column);
 			}
 		}

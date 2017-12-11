@@ -26,7 +26,7 @@ public class InputCell {
 	 *            Matrix类型输入向量x
 	 * @return 返回经过神经元处理后得到的Matrix类型矩阵,并且取转置
 	 */
-	public Matrix InputCell_Out(final Matrix x) {
+	public Matrix inputCell_Out(final Matrix x) {
 		// 矩阵转换
 		Matrix fx = Matrix.Factory.ones(w.getRowCount(), x.getColumnCount());
 		out = Matrix.Factory.copyFromMatrix(fx);

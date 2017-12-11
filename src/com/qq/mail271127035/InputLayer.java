@@ -34,7 +34,7 @@ public class InputLayer {
 		InputLayer inputLayer = new InputLayer();
 //		inputLayer.out_list.clear();
 		for (int i = 0; i < xList.size(); i++) {
-			Matrix out = InputCell.build(w, b).InputCell_Out(xList.get(i));
+			Matrix out = InputCell.build(w, b).inputCell_Out(xList.get(i));
 			inputLayer.out_list.add(out);
 		}
 

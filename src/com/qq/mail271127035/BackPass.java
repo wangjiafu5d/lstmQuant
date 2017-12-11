@@ -1,7 +1,6 @@
 package com.qq.mail271127035;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 import org.ujmp.core.Matrix;
@@ -17,10 +16,11 @@ import com.qq.mail271127035.util.MathUtil;
  */
 public class BackPass {
 
-	public List<Matrix> xList = new ArrayList<Matrix>();
 	public List<Matrix> bList = new ArrayList<Matrix>();
 	public List<Matrix> momentum = new ArrayList<Matrix>();
 	public List<Matrix> vt = new ArrayList<Matrix>();
+	public Matrix xt;
+	public Matrix lastInput;
 	public Matrix ht;
 	public Matrix out;
 	public Matrix ct_out;
@@ -36,13 +36,15 @@ public class BackPass {
 	public List<Matrix> backTrain(final Matrix w_output, final List<Matrix> w_hidden_list, final Matrix w_input,
 			final List<Matrix> xList) {
 		List<Matrix> wList = new ArrayList<Matrix>();
-		// xList中为6×1矩阵，转化为1×6矩阵
-		List<Matrix> x_trans_list = new ArrayList<Matrix>();
-		for (Iterator<Matrix> iterator = xList.iterator(); iterator.hasNext();) {
-			Matrix matrix = (Matrix) iterator.next();
-			x_trans_list.add(matrix.transpose());
+		lastInput = xList.get(xList.size() - 1);
+		// System.out.println(w_input);
+		// 最后一个lstm单元的输入Xt
+		xt = w_input.mtimes(lastInput).transpose();
+		for (int i = 0; i < xt.getRowCount(); i++) {
+			for (int j = 0; j < xt.getColumnCount(); j++) {
+				xt.setAsDouble(MathUtil.elu(xt.getAsDouble(i, j)), i, j);
+			}
 		}
-		this.xList = x_trans_list;
 		wList.add(backTrainOutputLayer(w_output));
 		List<Matrix> new_hidden_w_list = backTrainHiddenLayer(w_hidden_list);
 		for (int i = 0; i < new_hidden_w_list.size(); i++) {
@@ -53,7 +55,8 @@ public class BackPass {
 	}
 
 	public BackPass build(final Matrix ht, final Matrix out, final Matrix ct_out, final Matrix ct_prev,
-			final Matrix ht_prev, final List<Matrix> last_cell_result,final List<Matrix> momentum, final Matrix target, final Double eta) {
+			final Matrix ht_prev, final List<Matrix> last_cell_result, final List<Matrix> momentum, final Matrix target,
+			final Double eta) {
 		BackPass backPass = new BackPass();
 		backPass.ht = ht;
 		backPass.out = out;
@@ -68,8 +71,8 @@ public class BackPass {
 	}
 
 	private Matrix backTrainOutputLayer(final Matrix w_output) {
-		
-		delta_ht = Matrix.Factory.zeros(ht.getRowCount(), ht.getColumnCount());		
+
+		delta_ht = Matrix.Factory.zeros(ht.getRowCount(), ht.getColumnCount());
 		Matrix delta_out = out.minus(target);
 		Matrix delta_elu = Matrix.Factory.zeros(delta_out.getRowCount(), delta_out.getColumnCount());
 		Matrix grad_node = Matrix.Factory.zeros(w_output.getRowCount(), w_output.getColumnCount());
@@ -85,16 +88,13 @@ public class BackPass {
 
 	private List<Matrix> backTrainHiddenLayer(final List<Matrix> w_hidden_list) {
 		List<Matrix> new_w_list = new ArrayList<Matrix>();
-		
-		// 最后一个lstm单元的输入Xt
-		Matrix xt = xList.get(xList.size() - 1);		
 		// 最后一次lstmCell计算的ft,it,ct_cell,ot
 		Matrix ft = last_cell_result.get(0);
 		Matrix it = last_cell_result.get(1);
 		Matrix ct_cell = last_cell_result.get(2);
 		// Matrix ct_out = last_cell_result.get(3);
 		Matrix ot = last_cell_result.get(4);
-		// [ht-1,xt]的转置,由于前面ht-1与xt合并时，xt作第一行，ht-1作第二行，构成2×6矩阵，所以转置为6×2矩阵
+		// [ht-1,xt]的转置,由于前面ht-1与xt合并时，xt作第一行，ht-1作第二行，构成2×N矩阵，所以转置为N×2矩阵
 		Matrix in_trans = Matrix.Factory.zeros(xt.getColumnCount(), 2);
 		for (int i = 0; i < xt.getColumnCount(); i++) {
 			in_trans.setAsDouble(xt.getAsDouble(0, i), i, 0);
@@ -166,7 +166,8 @@ public class BackPass {
 			Matrix grad_w_input = Matrix.Factory.zeros(w_input.getRowCount(), w_input.getColumnCount());
 			// System.out.println("delta "+delta_xt.transpose());
 			// System.err.println(xLis);
-			grad_w_input = delta_xt.transpose().mtimes(xList.get(xList.size() - 1));
+			Matrix delta_elu = MathUtil.derivativeElu(xt);
+			grad_w_input = MathUtil.hadamard(delta_xt, delta_elu).transpose().mtimes(lastInput.transpose());
 			Matrix v = momentum.get(5).times(r).plus(grad_w_input.times(eta));
 			vt.add(v);
 			result = MathUtil.gradTrain(w_input, v, 1.0);

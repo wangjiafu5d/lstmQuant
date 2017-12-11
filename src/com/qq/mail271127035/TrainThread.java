@@ -12,7 +12,7 @@ public class TrainThread extends Thread {
 	double learning_rate = 0.0;
 	boolean isOut = false;
 	List<Matrix> xList = new ArrayList<Matrix>();
-	Matrix target = Matrix.Factory.rand(2, 1);
+	Matrix target = Matrix.Factory.rand(1, 1);
 	List<Matrix> trained_list = new ArrayList<Matrix>();
 	List<Matrix> momentum = new ArrayList<Matrix>();
 
@@ -29,13 +29,12 @@ public class TrainThread extends Thread {
 		outResult(out);
 
 		Matrix delta_m = out.minus(target);
-		if (delta_m.getAsDouble(0, 0) > 0) {
-			delta_m.setAsDouble(delta_m.getAsDouble(0, 0) * 1.0, 0, 0);
+		Double delta = 0.0;
+		for (int m = 0; m < delta_m.getRowCount(); m++) {
+			for (int n = 0; n < delta_m.getColumnCount(); n++) {
+				delta += 0.5 * Math.pow(delta_m.getAsDouble(m,n), 2);
+			}
 		}
-		if (delta_m.getAsDouble(1, 0) < 0) {
-			delta_m.setAsDouble(delta_m.getAsDouble(1, 0) * 1.0, 1, 0);
-		}
-		Double delta = 0.5 * (Math.pow(delta_m.getAsDouble(0, 0), 2) + Math.pow(delta_m.getAsDouble(1, 0), 2));
 		// System.out.println("loss"+i+" = "+delta);
 		// System.out.println(" " + delta);
 		Test.loss.add(delta);

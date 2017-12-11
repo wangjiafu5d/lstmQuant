@@ -99,4 +99,15 @@ public class MathUtil {
 		}
 		return result;
 	}
+	public static void matrixCheck(final Matrix matrix) {
+		for (int i = 0; i < matrix.getRowCount(); i++) {
+			for (int j = 0; j < matrix.getColumnCount(); j++) {
+				if (matrix.getAsDouble(i,j) > 30) {
+					System.out.println("有参数项超过30");
+					System.out.println(matrix);
+				}
+			}
+		}
+	}
+	
 }
