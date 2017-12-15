@@ -13,7 +13,7 @@ public class RandomParameters {
 //		System.out.println(Matrix.Factory.randn(1,2));
 //		System.out.println(Matrix.Factory.randn(2,6));
 //		
-//		
+//		setParams1();
 		setParams2();
 	}
 	public static void setParams1() {

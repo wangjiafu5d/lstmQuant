@@ -14,12 +14,12 @@ public class MathUtil {
 	}
 
 	public static Double sigmoid(final Double x) {
-		Double y = 1.0 / (1.0 + Math.pow(Math.E, -x));
+		Double y = 1.0 / (1.0 + Math.pow(Math.E, -x));		
 		return y;
 	}
 
 	public static Double tanh(final Double x) {
-		Double y = (Math.pow(Math.E, x) - Math.pow(Math.E, -x)) / (Math.pow(Math.E, x) - Math.pow(Math.E, -x));
+		Double y = (Math.pow(Math.E, x) - Math.pow(Math.E, -x)) / (Math.pow(Math.E, x) + Math.pow(Math.E, -x));
 		return y;
 	}
 
@@ -27,7 +27,7 @@ public class MathUtil {
 		Matrix result = Matrix.Factory.zeros(x.getRowCount(), x.getColumnCount());
 		for (int i = 0; i < x.getRowCount(); i++) {
 			for (int j = 0; j < x.getColumnCount(); j++) {
-				result.setAsDouble(x.getAsDouble(i, j), i, j);
+				result.setAsDouble(tanh(x.getAsDouble(i, j)), i, j);
 			}
 		}
 		return result;

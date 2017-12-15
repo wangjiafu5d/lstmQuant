@@ -77,17 +77,17 @@ public class Test {
 	
 		long[] rows = new long[256];
 		for (int i = 0; i < rows.length; i++) {
-			rows[i] = 256 + i;
+			rows[i] = i;
 		}
 
 		Matrix matrix = data.selectRows(Ret.LINK, rows);
 		// predict(matrix, 240, 0.05, 12);
 		// System.out.println(FileUtil.readMatrix(s13).getAsDouble(0, 0));
 //		new Test().train(1, matrix, 0, 18);
-//		new Test().train(500000, matrix, 0.05,0.00001, 30);
-		 for (int i = 0; i < 35; i++) {
-		 System.out.println(46-i+" : "+new Test().train(4000, matrix, 0.05,0.00001, 46-i));
-		 }
+		new Test().train(500000, matrix, 0.05,0.000001, 30);
+//		 for (int i = 0; i < 35; i++) {
+//		 System.out.println(46-i+" : "+new Test().train(4000, matrix, 0.05,0.00001, 46-i));
+//		 }
 //		for (int n = 0; n < 100000; n++) {
 //			sgd(matrix, 128, 1000, 0.05, 18);
 //		}
@@ -240,11 +240,12 @@ public class Test {
 			}
 			onceLoss = onceLoss / loss.size();
 			if (onceLoss > savedLoss) {
-				learning_rate = learning_rate * 0.9;
+				learning_rate = learning_rate * 0.9;				
 			} else {
-				if (learning_rate < 10) {
-					learning_rate = learning_rate * 1.05;					
+				if (learning_rate < 5) {
+					learning_rate = learning_rate * 1.05;
 				}
+				
 				w_output = w_output.times(0.0);
 				wf = wf.times(0.0);
 				wi = wi.times(0.0);
@@ -301,7 +302,7 @@ public class Test {
 			loss.clear();
 			vt.clear();
 
-//			System.out.println(onceLoss + "   " + t  + "   "  +learning_rate);
+			System.out.println(onceLoss + "   " + t  + "   "  +learning_rate + " " + lambda);
 
 			if (onceLoss < 0.00001 || t % 3000 == 0) {
 				saveParameters();
