@@ -73,19 +73,6 @@ public class MathUtil {
 		return result;
 	}
 
-	public static Matrix gradTrain(final Matrix w, final Matrix grad, final Double eta) {
-		Matrix result = Matrix.Factory.zeros(w.getRowCount(), w.getColumnCount());
-		if (w.getRowCount() == grad.getRowCount() && w.getColumnCount() == grad.getColumnCount()) {
-			result = w.minus(MathUtil.gradCheck(grad).times(eta));			
-		} else {
-			System.out.println("矩阵w和矩阵grad的行列数不相等，不满足运算规则");
-			System.out.println("*******x1:" + w.getRowCount() + "×" + w.getColumnCount() + "\r\n" + w);
-			System.out.println("*******x2:" + grad.getRowCount() + "×" + grad.getColumnCount() + "\r\n" + grad);
-			throw new RuntimeException();
-		}
-		return result;
-	}
-
 	public static Matrix gradCheck(final Matrix grad) {
 		Matrix result = Matrix.Factory.zeros(grad.getRowCount(), grad.getColumnCount());
 		for (int i = 0; i < grad.getRowCount(); i++) {
@@ -99,15 +86,16 @@ public class MathUtil {
 		}
 		return result;
 	}
+
 	public static void matrixCheck(final Matrix matrix) {
 		for (int i = 0; i < matrix.getRowCount(); i++) {
 			for (int j = 0; j < matrix.getColumnCount(); j++) {
-				if (matrix.getAsDouble(i,j) > 30) {
+				if (matrix.getAsDouble(i, j) > 30) {
 					System.out.println("有参数项超过30");
 					System.out.println(matrix);
 				}
 			}
 		}
 	}
-	
+
 }

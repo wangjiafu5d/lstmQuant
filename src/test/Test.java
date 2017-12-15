@@ -77,16 +77,17 @@ public class Test {
 	
 		long[] rows = new long[256];
 		for (int i = 0; i < rows.length; i++) {
-			rows[i] =   i;
+			rows[i] = 256 + i;
 		}
 
 		Matrix matrix = data.selectRows(Ret.LINK, rows);
 		// predict(matrix, 240, 0.05, 12);
 		// System.out.println(FileUtil.readMatrix(s13).getAsDouble(0, 0));
-		new Test().train(500000, matrix, 0.05, 18);
-//		 for (int i = 0; i < 35; i++) {
-//		 System.out.println(46-i+" : "+new Test().train(4000, matrix, 0.05, 46-i));
-//		 }
+//		new Test().train(1, matrix, 0, 18);
+//		new Test().train(500000, matrix, 0.05,0.00001, 30);
+		 for (int i = 0; i < 35; i++) {
+		 System.out.println(46-i+" : "+new Test().train(4000, matrix, 0.05,0.00001, 46-i));
+		 }
 //		for (int n = 0; n < 100000; n++) {
 //			sgd(matrix, 128, 1000, 0.05, 18);
 //		}
@@ -95,7 +96,7 @@ public class Test {
 		System.out.println("程序总共用时： " + (end_time - start_time));
 	}
 
-	public static void predict(Matrix m, int stepLength, double rate, int xListSize) {
+	public static void predict(Matrix m, int stepLength, double rate,double lambda, int xListSize) {
 		Test test = new Test();
 		long[] rows = new long[stepLength];
 		for (int step = 0; step < m.getRowCount() - stepLength + 1; step++) {
@@ -103,7 +104,7 @@ public class Test {
 				rows[i] = i + step;
 			}
 			Matrix matrix = m.selectRows(Ret.LINK, rows);
-			double lossAverage = test.train(4000, matrix, rate, xListSize);
+			double lossAverage = test.train(4000, matrix, rate,lambda, xListSize);
 
 			List<Matrix> xList = new ArrayList<Matrix>();
 			for (int j = 0; j < xListSize; j++) {
@@ -129,7 +130,7 @@ public class Test {
 
 	}
 
-	public static void sgd(Matrix data, int stepLength, int times, double rate, int xListSize) {
+	public static void sgd(Matrix data, int stepLength, int times, double rate, double lambda, int xListSize) {
 		Test test = new Test();
 		long[] rows = new long[stepLength];
 		int start = new Random().nextInt((int) data.getRowCount() - stepLength + 1);
@@ -137,7 +138,7 @@ public class Test {
 			rows[i] = i + start;
 		}
 		Matrix matrix = data.selectRows(Ret.LINK, rows);
-		System.out.println(test.train(times, matrix, rate, xListSize));
+		System.out.println(test.train(times, matrix, rate,lambda, xListSize));
 
 	}
 
@@ -197,7 +198,7 @@ public class Test {
 		s14 = desktop + "/LSTM/parameters/loss.txt";
 	}
 
-	public double train(int times, Matrix matrixData, double learning_rate, int xListSize) {
+	public double train(int times, Matrix matrixData, double learning_rate, double lambda, int xListSize) {
 		savedLoss = FileUtil.readMatrix(s14).getAsDouble(0, 0);
 		List<Matrix> momentum = new ArrayList<Matrix>();
 		momentum.add(Matrix.Factory.zeros(w_output.getRowCount(), w_output.getColumnCount()));
@@ -220,6 +221,7 @@ public class Test {
 				TrainThread thread = new TrainThread();
 				thread.setI(i);
 				thread.setLearning_rate(learning_rate);
+				thread.setLambda(lambda);
 				thread.setxList(xList);
 				thread.setTarget(target);
 				thread.setMomentum(momentum);
@@ -240,7 +242,7 @@ public class Test {
 			if (onceLoss > savedLoss) {
 				learning_rate = learning_rate * 0.9;
 			} else {
-				if (learning_rate < 20) {
+				if (learning_rate < 10) {
 					learning_rate = learning_rate * 1.05;					
 				}
 				w_output = w_output.times(0.0);
@@ -299,9 +301,9 @@ public class Test {
 			loss.clear();
 			vt.clear();
 
-			System.out.println(onceLoss + "   " + t  + "   "  +learning_rate);
+//			System.out.println(onceLoss + "   " + t  + "   "  +learning_rate);
 
-			if (onceLoss < 0.00001 || t % 5000 == 0) {
+			if (onceLoss < 0.00001 || t % 3000 == 0) {
 				saveParameters();
 				saveRate(learning_rate);
 				saveLoss(savedLoss);

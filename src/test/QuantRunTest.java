@@ -83,7 +83,7 @@ public class QuantRunTest {
 			momentum.add(Matrix.Factory.zeros(w_hidden_list.get(0).getRowCount(),w_hidden_list.get(0).getColumnCount()));
 			momentum.add(Matrix.Factory.zeros(w_hidden_list.get(0).getRowCount(),w_hidden_list.get(0).getColumnCount()));
 			momentum.add(Matrix.Factory.zeros(w_input.getRowCount(),w_input.getColumnCount()));
-			BackPass backPass = new BackPass().build(ht, out, ct_out, ct_prev, ht_prev, last_cell_result, momentum, target, learning_rate);
+			BackPass backPass = new BackPass().build(ht, out, ct_out, ct_prev, ht_prev, last_cell_result, momentum, target, learning_rate ,0.0001);
 			trained_list = backPass.backTrain(w_output, w_hidden_list, w_input, xList);
 			// for (Iterator iterator = trained_list.iterator(); iterator.hasNext();) {
 			// Matrix matrix = (Matrix) iterator.next();

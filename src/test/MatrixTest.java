@@ -57,13 +57,14 @@ public class MatrixTest {
 		m5 = m5.selectRows(Ret.LINK,ii);//选取指定的行构成新矩阵
 //		System.out.println(m5);
 		
-		Matrix matrix1 = Matrix.Factory.rand(1,2);
-		Matrix matrix2 = Matrix.Factory.rand(1,2);
-		Matrix matrix3 = Matrix.Factory.rand(1,2);
-		matrix3 = matrix1.minus(matrix2.times(0.0));
+		Matrix matrix1 = Matrix.Factory.rand(2,3);
+		Matrix matrix2 = Matrix.Factory.rand(2,3);
+//		Matrix matrix3 = Matrix.Factory.rand(1,2);
+//		matrix3 = matrix1.minus(matrix2.times(0.0));
 		System.out.println(matrix1);
 		System.out.println(matrix2);
-		System.out.println(matrix3);
+//		System.out.println(matrix3);
+		System.out.println(matrix1.times(matrix2));
 		
 	}
 	public static Matrix createMatrix(int m, int n) {

@@ -10,6 +10,7 @@ import test.Test;
 public class TrainThread extends Thread {
 	int i = 0;
 	double learning_rate = 0.0;
+	double lambda = 0.0;
 	boolean isOut = false;
 	List<Matrix> xList = new ArrayList<Matrix>();
 	Matrix target = Matrix.Factory.rand(1, 1);
@@ -29,15 +30,11 @@ public class TrainThread extends Thread {
 		outResult(out);
 
 		Matrix delta_m = out.minus(target);
-		Double delta = 0.0;
-		for (int m = 0; m < delta_m.getRowCount(); m++) {
-			for (int n = 0; n < delta_m.getColumnCount(); n++) {
-				delta += 0.5 * Math.pow(delta_m.getAsDouble(m,n), 2);
-			}
-		}
+		Double loss = 0.5 * delta_m.norm2();
+		
 		// System.out.println("loss"+i+" = "+delta);
 		// System.out.println(" " + delta);
-		Test.loss.add(delta);
+		Test.loss.add(loss);
 		LstmLayer lstmLayer = forwardPass.getLstmLayer();
 		Matrix ht = lstmLayer.ht_out_list.get(lstmLayer.ht_out_list.size() - 1);
 		// lstm层的最后一个Ct输出
@@ -47,7 +44,7 @@ public class TrainThread extends Thread {
 		Matrix ht_prev = lstmLayer.ht_out_list.get(lstmLayer.ht_out_list.size() - 2);
 		// 最后一次Xt输入lstm单元计算中的所有结果
 		List<Matrix> last_cell_result = lstmLayer.cells_result.get(lstmLayer.cells_result.size() - 1);
-		BackPass backPass = new BackPass().build(ht, out, ct_out, ct_prev, ht_prev, last_cell_result, momentum, target, learning_rate);
+		BackPass backPass = new BackPass().build(ht, out, ct_out, ct_prev, ht_prev, last_cell_result, momentum, target, learning_rate ,lambda);
 		trained_list = backPass.backTrain(Test.w_output, Test.w_hidden_list, Test.w_input, xList);
 		Test.trainedVectorLists.add(trained_list);
 		Test.vt.add(backPass.getVt());
@@ -103,4 +100,12 @@ public class TrainThread extends Thread {
 		this.momentum = momentum;
 	}
 
+	public double getLambda() {
+		return lambda;
+	}
+
+	public void setLambda(double lambda) {
+		this.lambda = lambda;
+	}
+	
 }
