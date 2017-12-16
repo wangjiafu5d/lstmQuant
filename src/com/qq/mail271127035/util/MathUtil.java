@@ -14,7 +14,17 @@ public class MathUtil {
 	}
 
 	public static Double sigmoid(final Double x) {
-		Double y = 1.0 / (1.0 + Math.pow(Math.E, -x));		
+		Double y = 1.0 / (1.0 + Math.pow(Math.E, -x));
+		return y;
+	}
+
+	public static Matrix sigmoid(final Matrix x) {
+		Matrix y = Matrix.Factory.zeros(x.getRowCount(), x.getColumnCount());
+		for (int i = 0; i < x.getRowCount(); i++) {
+			for (int j = 0; j < x.getColumnCount(); j++) {
+				y.setAsDouble(sigmoid(x.getAsDouble(i, j)), i, j);
+			}
+		}
 		return y;
 	}
 
@@ -31,32 +41,7 @@ public class MathUtil {
 			}
 		}
 		return result;
-	}
-
-	public static Matrix hadamard(final Matrix x1, final Matrix x2) {
-		Matrix result = Matrix.Factory.zeros(x1.getRowCount(), x1.getColumnCount());
-		if (x1.getRowCount() == x2.getRowCount() && x1.getColumnCount() == x2.getColumnCount()) {
-			for (int i = 0; i < x1.getRowCount(); i++) {
-				for (int j = 0; j < x1.getColumnCount(); j++) {
-					result.setAsDouble(x1.getAsDouble(i, j) * x2.getAsDouble(i, j), i, j);
-				}
-			}
-		} else {
-			System.out.println("矩阵x1与x2的行列数不相等，无法hadamard相乘");
-			System.out.println("*******x1:" + x1.getRowCount() + "×" + x1.getColumnCount() + "\r\n" + x1);
-			System.out.println("*******x2:" + x2.getRowCount() + "×" + x2.getColumnCount() + "\r\n" + x2);
-			throw new RuntimeException();
-		}
-		return result;
-	}
-
-	public static Matrix seriesHadamard(final Matrix... matrixs) {
-		Matrix result = Matrix.Factory.ones(matrixs[0].getRowCount(), matrixs[0].getColumnCount());
-		for (Matrix matrix : matrixs) {
-			result = MathUtil.hadamard(result, matrix);
-		}
-		return result;
-	}
+	}	
 
 	public static Matrix derivativeElu(final Matrix out) {
 		Matrix result = Matrix.Factory.zeros(out.getRowCount(), out.getColumnCount());

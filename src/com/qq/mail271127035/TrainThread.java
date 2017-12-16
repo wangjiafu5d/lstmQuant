@@ -30,8 +30,13 @@ public class TrainThread extends Thread {
 		outResult(out);
 
 		Matrix delta_m = out.minus(target);
-		Double loss = 0.5 * delta_m.norm2();
-		
+//		Double loss = 0.5 * delta_m.norm2();
+		Double loss = 0.0;			
+		for (int m = 0; m < delta_m.getRowCount(); m++) {				
+	 		for (int n = 0; n < delta_m.getColumnCount(); n++) {		
+	 			loss += 0.5 * Math.pow(delta_m.getAsDouble(m,n), 2);		
+			}		
+	 	}
 		// System.out.println("loss"+i+" = "+delta);
 		// System.out.println(" " + delta);
 		Test.loss.add(loss);
@@ -44,8 +49,10 @@ public class TrainThread extends Thread {
 		Matrix ht_prev = lstmLayer.ht_out_list.get(lstmLayer.ht_out_list.size() - 2);
 		// 最后一次Xt输入lstm单元计算中的所有结果
 		List<Matrix> last_cell_result = lstmLayer.cells_result.get(lstmLayer.cells_result.size() - 1);
-		BackPass backPass = new BackPass().build(ht, out, ct_out, ct_prev, ht_prev, last_cell_result, momentum, target, learning_rate ,lambda);
-		trained_list = backPass.backTrain(Test.w_output, Test.w_hidden_list, Test.w_input, xList);
+		BackPass backPass = new BackPass().build(ht, out, ct_out, ct_prev, ht_prev, last_cell_result, momentum, target,
+				learning_rate, lambda);
+		Matrix xt = forwardPass.getInputLayer().out_list.get(forwardPass.getInputLayer().out_list.size() - 1);
+		trained_list = backPass.backTrain(Test.w_output, Test.w_hidden_list, Test.w_input, xt, xList);
 		Test.trainedVectorLists.add(trained_list);
 		Test.vt.add(backPass.getVt());
 	}
@@ -107,5 +114,5 @@ public class TrainThread extends Thread {
 	public void setLambda(double lambda) {
 		this.lambda = lambda;
 	}
-	
+
 }

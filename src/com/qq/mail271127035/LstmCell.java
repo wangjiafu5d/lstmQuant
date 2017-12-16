@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.ujmp.core.Matrix;
+import org.ujmp.core.calculation.Calculation.Ret;
 
 import com.qq.mail271127035.util.MathUtil;
 
@@ -40,13 +41,10 @@ public class LstmCell {
 		return lstmCell_Out;
 	}
 
-	public Matrix calculate_Ft(final Matrix w_f, final Matrix h_in, final Matrix x1, final Matrix b_f) {
-		Matrix d = calculateVector(w_f, h_in, x1, b_f);
-		Matrix result = Matrix.Factory.copyFromMatrix(d);
+	public Matrix calculate_Ft(final Matrix w_f, final Matrix h_in, final Matrix x, final Matrix b_f) {
+		Matrix result = calculateVector(w_f, h_in, x, b_f);		
 		// 将矩阵运算结果中每个Double元素都通过sigmoid转化为0~1的值
-		for (int i = 0; i < d.getColumnCount(); i++) {
-			result.setAsDouble(MathUtil.sigmoid(d.getAsDouble(0, i)), 0, i);
-		}
+		result = MathUtil.sigmoid(result);
 		return result;
 	}
 
@@ -63,7 +61,7 @@ public class LstmCell {
 	public Matrix calculate_Ct_Out(final Matrix ft, final Matrix ct_in, final Matrix it, final Matrix ct_cell) {
 		// ft与ct_in的Hadamard乘积，it与ct_cell的Hadamard乘积，其元素定义为两个矩阵对应元素的乘积的m×n矩阵
 		Matrix result = Matrix.Factory.zeros(ft.getRowCount(), ft.getColumnCount());
-		result = MathUtil.hadamard(ft, ct_in).plus(MathUtil.hadamard(it, ct_cell));
+		result = ft.times(ct_in).plus(it.times(ct_cell));
 		return result;
 	}
 
@@ -73,7 +71,7 @@ public class LstmCell {
 
 	public Matrix calculate_Ht(final Matrix ot, final Matrix ct_out) {
 		// ot与ct_out的Hadamard乘积，其元素定义为两个矩阵对应元素的乘积的m×n矩阵		
-		return MathUtil.hadamard(ot, MathUtil.tanh(ct_out));
+		return ot.times(MathUtil.tanh(ct_out));
 	}
 
 	/**
@@ -82,23 +80,19 @@ public class LstmCell {
 	 *            系数矩阵w,1×2
 	 * @param h_in
 	 *            上一个lstm单元的输出矩阵h_in,1×6
-	 * @param x1
+	 * @param x
 	 *            本个单元的x输入,1×6
 	 * @param b
 	 *            系数矩阵b,1×2
 	 * @return Matrix类型的矩阵运算结果，y = w[h_in,x1] + b
 	 */
-	public Matrix calculateVector(final Matrix w, final Matrix h_in, final Matrix x1, final Matrix b) {
-		Matrix h_in_And_x1 = Matrix.Factory.zeros(2, x1.getColumnCount());
-		Matrix y = Matrix.Factory.zeros(1, x1.getColumnCount());
-		if (w.getColumnCount() == h_in_And_x1.getRowCount()) {
+	public Matrix calculateVector(final Matrix w, final Matrix h_in, final Matrix x, final Matrix b) {
+		Matrix xAppendHin = Matrix.Factory.zeros(2*x.getRowCount(), x.getColumnCount());
+		Matrix y = Matrix.Factory.zeros(w.getRowCount(), x.getColumnCount());
+		if (w.getColumnCount() == xAppendHin.getRowCount()) {
 			// 将矩阵h_in,x1合并成矩阵h_in_And_x1再与矩阵w相乘
-			for (int i = 0; i < x1.getColumnCount(); i++) {
-				// System.out.println(h_in.getColumnCount());
-				h_in_And_x1.setAsDouble(x1.getAsDouble(0, i), 0, i);
-				h_in_And_x1.setAsDouble(h_in.getAsDouble(0, i), 1, i);
-			}
-			y = w.mtimes(h_in_And_x1).plus(b);
+			xAppendHin = x.appendVertically(Ret.LINK, h_in);
+			y = w.mtimes(xAppendHin).plus(b);
 		} else {
 			System.out.println("矩阵w与矩阵[h0,x1]行列不匹配，无法相乘");
 		}

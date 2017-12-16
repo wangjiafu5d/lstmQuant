@@ -50,8 +50,7 @@ public class MatrixTest {
 		Matrix m3 = Matrix.Factory.rand(1,6);
 		Matrix m4 = Matrix.Factory.rand(1,6);
 		Matrix m5 = Matrix.Factory.rand(1,6);
-		System.out.println(MathUtil.seriesHadamard(m3,m4,m5));
-		System.out.println(MathUtil.hadamard(MathUtil.hadamard(m3, m4), m5));
+		
 		
 		long[] ii = {0,1};
 		m5 = m5.selectRows(Ret.LINK,ii);//选取指定的行构成新矩阵
@@ -65,6 +64,7 @@ public class MatrixTest {
 		System.out.println(matrix2);
 //		System.out.println(matrix3);
 		System.out.println(matrix1.times(matrix2));
+		System.out.println(matrix1.appendVertically(Ret.LINK, matrix2));
 		
 	}
 	public static Matrix createMatrix(int m, int n) {
