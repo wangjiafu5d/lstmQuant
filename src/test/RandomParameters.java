@@ -1,5 +1,7 @@
 package test;
 
+import java.util.Random;
+
 import org.ujmp.core.Matrix;
 
 import com.qq.mail271127035.util.FileUtil;
@@ -99,7 +101,7 @@ public class RandomParameters {
 		Matrix matrix = Matrix.Factory.zeros(m,n);
 		for (int i = 0; i < m; i++) {
 			for (int j = 0; j < n; j++) {
-				matrix.setAsDouble(Math.random()*2 - 1, i,j);
+				matrix.setAsDouble(new Random().nextGaussian() * Math.sqrt(2.0/(m+n)), i,j);
 			}
 		}
 		return matrix;

@@ -30,13 +30,14 @@ public class TrainThread extends Thread {
 		outResult(out);
 
 		Matrix delta_m = out.minus(target);
-//		Double loss = 0.5 * delta_m.norm2();
-		Double loss = 0.0;			
-		for (int m = 0; m < delta_m.getRowCount(); m++) {				
-	 		for (int n = 0; n < delta_m.getColumnCount(); n++) {		
-	 			loss += 0.5 * Math.pow(delta_m.getAsDouble(m,n), 2);		
-			}		
-	 	}
+
+		// Double loss = 0.5 * delta_m.norm2();
+		Double loss = 0.0;
+		for (int m = 0; m < delta_m.getRowCount(); m++) {
+			for (int n = 0; n < delta_m.getColumnCount(); n++) {
+				loss += 0.5 * Math.pow(delta_m.getAsDouble(m, n), 2);
+			}
+		}
 		// System.out.println("loss"+i+" = "+delta);
 		// System.out.println(" " + delta);
 		Test.loss.add(loss);

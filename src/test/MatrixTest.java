@@ -65,6 +65,7 @@ public class MatrixTest {
 //		System.out.println(matrix3);
 		System.out.println(matrix1.times(matrix2));
 		System.out.println(matrix1.appendVertically(Ret.LINK, matrix2));
+		System.out.println(Matrix.Factory.ones(2,3).times(2).tanh());
 		
 	}
 	public static Matrix createMatrix(int m, int n) {

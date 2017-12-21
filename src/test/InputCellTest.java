@@ -27,7 +27,7 @@ public class InputCellTest {
 		System.out.println(w);
 		System.out.println(b);
 		InputCell inputCell = InputCell.build(w, b);
-		Matrix out = inputCell.inputCell_Out(x);
+		Matrix out = inputCell.out(x);
 		
 //		String s = out.toString();
 //		String[] str = s.split(" ");

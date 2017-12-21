@@ -8,7 +8,7 @@ public class OutputLayer {
 
 	public static OutputLayer build(final Matrix w, final Matrix b, final Matrix x) {
 		OutputLayer outputLayer = new OutputLayer();
-		Matrix result = InputCell.build(w, b).inputCell_Out(x).transpose();
+		Matrix result = InputCell.build(w, b).out(x).transpose();
 		outputLayer.out = result;
 		return outputLayer;
 	}

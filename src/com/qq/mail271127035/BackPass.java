@@ -73,6 +73,7 @@ public class BackPass {
 
 		delta_ht = Matrix.Factory.zeros(ht.getRowCount(), ht.getColumnCount());
 		Matrix delta_out = out.minus(target);
+		
 		// System.out.println(delta_out);
 		Matrix delta_elu = Matrix.Factory.zeros(delta_out.getRowCount(), delta_out.getColumnCount());
 		Matrix grad_node = Matrix.Factory.zeros(w_output.getRowCount(), w_output.getColumnCount());
