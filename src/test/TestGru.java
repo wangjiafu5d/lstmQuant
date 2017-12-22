@@ -2,6 +2,7 @@ package test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import java.util.Vector;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -15,8 +16,9 @@ import com.qq.mail271127035.util.FileUtil;
 
 public class TestGru {
 	public static List<List<Matrix>> gradList = new Vector<List<Matrix>>();
-	private static double onceLoss = 0.0;
+	private static double loss = 0.0;
 	private static double savedLoss = 0.0;
+	private static double tryLoss = 0.0;
 	public static String s0;
 	public static String s1;
 	public static String s2;
@@ -52,6 +54,7 @@ public class TestGru {
 		w_hidden_list.add(wi);
 		w_hidden_list.add(wc);
 	}
+
 	public static void main(String[] args) {
 		double start = System.currentTimeMillis();
 		long[] rows = new long[256];
@@ -60,20 +63,21 @@ public class TestGru {
 		}
 
 		Matrix matrix = data.selectRows(Ret.LINK, rows);
-		train(50000, matrix, 0.003, 0.01, 30);
+		train(10000, matrix, 0.001, 0.0, 18);
 		double end = System.currentTimeMillis();
 		System.out.println(end - start);
 	}
+
 	public static double train(int times, Matrix matrixData, double learning_rate, double lambda, int xListSize) {
 		savedLoss = FileUtil.readMatrix(s14).getAsDouble(0, 0);
-		Matrix vWInput = Matrix.Factory.zeros(w_input.getRowCount(),w_input.getColumnCount());
-		Matrix vBInput = Matrix.Factory.zeros(b_input.getRowCount(),b_input.getColumnCount());
-		Matrix vWz = Matrix.Factory.zeros(wf.getRowCount(),wf.getColumnCount());
-		Matrix vWr = Matrix.Factory.zeros(wi.getRowCount(),wi.getColumnCount());
-		Matrix vWo = Matrix.Factory.zeros(wc.getRowCount(),wc.getColumnCount());
+		Matrix vWInput = Matrix.Factory.zeros(w_input.getRowCount(), w_input.getColumnCount());
+		Matrix vBInput = Matrix.Factory.zeros(b_input.getRowCount(), b_input.getColumnCount());
+		Matrix vWz = Matrix.Factory.zeros(wf.getRowCount(), wf.getColumnCount());
+		Matrix vWr = Matrix.Factory.zeros(wi.getRowCount(), wi.getColumnCount());
+		Matrix vWo = Matrix.Factory.zeros(wc.getRowCount(), wc.getColumnCount());
 		double r = 0.9;
-		Matrix vWOutput = Matrix.Factory.zeros(w_output.getRowCount(),w_output.getColumnCount());
-		Matrix vBOutput = Matrix.Factory.zeros(b_output.getRowCount(),b_output.getColumnCount());
+		Matrix vWOutput = Matrix.Factory.zeros(w_output.getRowCount(), w_output.getColumnCount());
+		Matrix vBOutput = Matrix.Factory.zeros(b_output.getRowCount(), b_output.getColumnCount());
 		for (int t = 0; t < times; t++) {
 			ExecutorService exec = Executors.newFixedThreadPool(40);
 			for (int i = 0; i < matrixData.getRowCount() - xListSize; i++) {
@@ -82,9 +86,11 @@ public class TestGru {
 				for (int j = 0; j < xListSize; j++) {
 					xList.add(matrixData.selectRows(Ret.LINK, i + j).transpose());
 				}
-				
-//				targetList.add(matrixData.selectRows(Ret.LINK, i + xListSize - 2).selectColumns(Ret.LINK, 3));
-//				targetList.add(matrixData.selectRows(Ret.LINK, i + xListSize - 1).selectColumns(Ret.LINK, 3));
+
+				// targetList.add(matrixData.selectRows(Ret.LINK, i + xListSize -
+				// 2).selectColumns(Ret.LINK, 3));
+				// targetList.add(matrixData.selectRows(Ret.LINK, i + xListSize -
+				// 1).selectColumns(Ret.LINK, 3));
 				targetList.add(matrixData.selectRows(Ret.LINK, i + xListSize).selectColumns(Ret.LINK, 3));
 				// long[] columns = {1,2};
 				// target = matrixData.selectRows(Ret.LINK, i +
@@ -111,46 +117,48 @@ public class TestGru {
 				d1 = d1.plus(list.get(0));
 				d2 = d2.plus(list.get(1));
 				d3 = d3.plus(list.get(2));
-				d4 = d4.plus(list.get(3));				
+				d4 = d4.plus(list.get(3));
 				d5 = d5.plus(list.get(4));
-				d6 = d6.plus(list.get(5));				
+				d6 = d6.plus(list.get(5));
 				d7 = d7.plus(list.get(6));
 			}
-			
-			
+
 			double l1 = 0.0;
 			double l2 = 0.0;
 			for (int i = 0; i < loss1.size(); i++) {
 				l1 += loss1.get(i);
 				l2 += loss2.get(i);
 			}
-			onceLoss = l1 / loss1.size();
-			double onceLoos2 = l2/loss2.size();
-			if (onceLoss > savedLoss) {
-				learning_rate = learning_rate * 0.9;
+			loss = l1 / loss1.size();
+			double onceLoss2 = l2 / loss2.size();
+
+			if (Math.abs(1 - loss / savedLoss) > 0.02) {
+				learning_rate = learning_rate * 0.5;
 			} else {
-				if (learning_rate < 10) {
+				if (Math.abs(1 - loss / savedLoss) < 0.005) {
 					learning_rate = learning_rate * 1.01;
 				}
-				
-				vWInput = vWInput.times(r).plus(d6.plus(w_input.times(w_input.norm2()*lambda)).times(learning_rate));
-				vBInput = vBInput.times(r).plus(d7.plus(b_input.times(b_input.norm2()*lambda)).times(learning_rate));
-				vWz = vWz.times(r).plus(d3.plus(wf.times(wf.norm2()*lambda)).times(learning_rate));
-				vWr = vWr.times(r).plus(d4.plus(wi.times(wi.norm2()*lambda)).times(learning_rate));
-				vWo = vWo.times(r).plus(d5.plus(wc.times(wc.norm2()*lambda)).times(learning_rate));
-				vWOutput = vWOutput.times(r).plus(d1.plus(w_output.times(w_output.norm2()*lambda)).times(learning_rate));
-				vBOutput = vBOutput.times(r).plus(d2.plus(b_output.times(b_output.norm2()*lambda)).times(learning_rate));
+				vWInput = vWInput.times(r).plus(d6.plus(w_input.times(w_input.norm2() * lambda)).times(learning_rate));
+				vBInput = vBInput.times(r).plus(d7.plus(b_input.times(b_input.norm2() * lambda)).times(learning_rate));
+				vWz = vWz.times(r).plus(d3.plus(wf.times(wf.norm2() * lambda)).times(learning_rate));
+				vWr = vWr.times(r).plus(d4.plus(wi.times(wi.norm2() * lambda)).times(learning_rate));
+				vWo = vWo.times(r).plus(d5.plus(wc.times(wc.norm2() * lambda)).times(learning_rate));
+				vWOutput = vWOutput.times(r)
+						.plus(d1.plus(w_output.times(w_output.norm2() * lambda)).times(learning_rate));
+				vBOutput = vBOutput.times(r)
+						.plus(d2.plus(b_output.times(b_output.norm2() * lambda)).times(learning_rate));
 				w_input = w_input.minus(vWInput);
-//				System.out.println(d1);
-//				System.out.println(d1.norm2());
-				b_input = b_input.minus(vBInput);
+				// System.out.println(d1);
+				// System.out.println(d1.norm2());
+				// b_input = b_input.minus(vBInput);
 				wf = wf.minus(vWz);
 				wi = wi.minus(vWr);
 				wc = wc.minus(vWo);
 				w_output = w_output.minus(vWOutput);
-				b_output = b_output.minus(vBOutput);
+				// b_output = b_output.minus(vBOutput);
+
 			}
-			savedLoss = onceLoss;
+			savedLoss = loss;
 
 			loss1.clear();
 			loss2.clear();
@@ -159,9 +167,9 @@ public class TestGru {
 			w_hidden_list.add(wf);
 			w_hidden_list.add(wi);
 			w_hidden_list.add(wc);
-			System.out.println(onceLoss + "   " + t + "   " + learning_rate + " " + lambda + " "+ onceLoos2);
+			System.out.println(loss + "   " + t + "   " + learning_rate + " " + lambda + " " + onceLoss2);
 
-			if (onceLoss < 0.00001 || t % 3000 == 0) {
+			if (loss < 0.00001 || t % 3000 == 0) {
 				saveParameters();
 				saveRate(learning_rate);
 				saveLoss(savedLoss);

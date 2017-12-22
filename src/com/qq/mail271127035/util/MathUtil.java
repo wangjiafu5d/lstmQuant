@@ -3,6 +3,9 @@ package com.qq.mail271127035.util;
 import org.ujmp.core.Matrix;
 
 public class MathUtil {
+	// 激活函数elu y = max(e^x - 1,x);
+	// -1 < y < x ，适用于输入x主要分布在大于0位置, 有稀疏激活的作用。
+	// y' = max(y - 1, 1);
 	public static Double elu(final Double x) {
 		Double y = 0.0;
 		if (x > 0) {
@@ -13,6 +16,9 @@ public class MathUtil {
 		return y;
 	}
 
+	// 激活函数sigmod y = 1 / (1 + e^-x);
+	// 0 < y < 1 ，适用于输入x分布在0附近, 输出大于0 ，如输出概率。
+	// y' = y *( 1 - y);
 	public static Double sigmoid(final Double x) {
 		Double y = 1.0 / (1.0 + Math.pow(Math.E, -x));
 		return y;
@@ -28,8 +34,12 @@ public class MathUtil {
 		return y;
 	}
 
+	// 激活函数tanh y = (1 - e^-2x)/(1 + e^-2x);
+	// -1 < y < 1 , 适用于输入x分布在0附近, 目标输出对称的
+	// y' = 1 - y^2;
 	public static Double tanh(final Double x) {
-		Double y = (Math.pow(Math.E, x) - Math.pow(Math.E, -x)) / (Math.pow(Math.E, x) + Math.pow(Math.E, -x));
+		double temp = Math.pow(Math.E, -2.0*x);
+		Double y =( 1.0 - temp) / (1.0 + temp);
 		return y;
 	}
 
@@ -41,7 +51,7 @@ public class MathUtil {
 			}
 		}
 		return result;
-	}	
+	}
 
 	public static Matrix derivativeElu(final Matrix out) {
 		Matrix result = Matrix.Factory.zeros(out.getRowCount(), out.getColumnCount());

@@ -123,6 +123,7 @@ public class GruBackwardPass {
 		Matrix gradBInput = Matrix.Factory.zeros(0, 0);
 		if (null != deltaXEncoded) {
 			Matrix deltaElu = MathUtil.derivativeElu(xEncoded);
+//			Matrix deltaElu = Matrix.Factory.ones(xEncoded.getRowCount(),xEncoded.getColumnCount()).minus(xEncoded.times(xEncoded));
 			gradBInput = deltaXEncoded.times(deltaElu).transpose();
 			gradWInput = gradBInput.mtimes(xInput.transpose());
 		} else {

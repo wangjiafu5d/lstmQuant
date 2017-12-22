@@ -35,7 +35,7 @@ public class InputCell {
 			fx = w.mtimes(x).plus(b);
 		} else {
 			System.out.println("w向量,x向量,b向量行列数不匹配，无法计算");
-		}
+		}		
 		// 激活函数eLU y = e^x - 1(x<=0),y = x(x>0);
 		for (long i = 0; i < fx.getRowCount(); i++) {
 			for (long j = 0; j < fx.getColumnCount(); j++) {

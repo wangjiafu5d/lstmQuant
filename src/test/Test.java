@@ -84,7 +84,7 @@ public class Test {
 		// predict(matrix, 240, 0.05, 12);
 		// System.out.println(FileUtil.readMatrix(s13).getAsDouble(0, 0));
 		// new Test().train(1, matrix, 0, 18);
-		new Test().train(100000, matrix, 0.05, 0.000001, 18);
+		new Test().train(10000, matrix, 0.05, 0.000001, 18);
 		// for (int i = 0; i < 35; i++) {
 		// System.out.println(46-i+" : "+new Test().train(4000, matrix, 0.05,0.00001,
 		// 46-i));

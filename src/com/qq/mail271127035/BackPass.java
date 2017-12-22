@@ -170,6 +170,8 @@ public class BackPass {
 			// System.out.println("delta "+delta_xt.transpose());
 			// System.err.println(xLis);
 			Matrix delta_elu = MathUtil.derivativeElu(xt);
+//			Matrix delta_elu = Matrix.Factory.ones(xt.getRowCount(),xt.getColumnCount()).minus(xt.times(xt));
+//			Matrix delta_elu = xt.times(Matrix.Factory.ones(xt.getRowCount(),xt.getColumnCount()).minus(xt));
 			grad_w_input = delta_xt.times(delta_elu).transpose().mtimes(lastInput.transpose());
 			// System.out.println(grad_w_input);
 			Matrix reg = w_input.times(lambda * w_input.norm2());
