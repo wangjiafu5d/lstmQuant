@@ -13,12 +13,12 @@ import org.ujmp.core.calculation.Calculation.Ret;
 
 import com.qq.mail271127035.GruTrainThread;
 import com.qq.mail271127035.util.FileUtil;
+import com.qq.mail271127035.util.MyMatrixUtil;
 
 public class TestGru {
 	public static List<List<Matrix>> gradList = new Vector<List<Matrix>>();
 	private static double loss = 0.0;
 	private static double savedLoss = 0.0;
-	private static double tryLoss = 0.0;
 	public static String s0;
 	public static String s1;
 	public static String s2;
@@ -43,16 +43,23 @@ public class TestGru {
 	public static Matrix wf = FileUtil.readMatrix(s3);
 	public static Matrix wi = FileUtil.readMatrix(s4);
 	public static Matrix wc = FileUtil.readMatrix(s5);
+	public static Matrix bf = FileUtil.readMatrix(s7);
+	public static Matrix bi = FileUtil.readMatrix(s8);
+	public static Matrix bc = FileUtil.readMatrix(s9);
 	public static Matrix w_output = FileUtil.readMatrix(s11);
 	public static Matrix b_output = FileUtil.readMatrix(s12);
 
 	public static List<Matrix> w_hidden_list = new ArrayList<Matrix>();
+	public static List<Matrix> b_hidden_list = new ArrayList<Matrix>();
 	public static List<Double> loss1 = new Vector<Double>();
 	public static List<Double> loss2 = new Vector<Double>();
 	static {
 		w_hidden_list.add(wf);
 		w_hidden_list.add(wi);
 		w_hidden_list.add(wc);
+		b_hidden_list.add(bf);
+		b_hidden_list.add(bi);
+		b_hidden_list.add(bc);
 	}
 
 	public static void main(String[] args) {
@@ -63,12 +70,13 @@ public class TestGru {
 		}
 
 		Matrix matrix = data.selectRows(Ret.LINK, rows);
-		train(10000, matrix, 0.001, 0.0, 18);
+		train(10000, matrix, 0.005, 0.0, 18);
 		double end = System.currentTimeMillis();
 		System.out.println(end - start);
 	}
 
 	public static double train(int times, Matrix matrixData, double learning_rate, double lambda, int xListSize) {
+
 		savedLoss = FileUtil.readMatrix(s14).getAsDouble(0, 0);
 		Matrix vWInput = Matrix.Factory.zeros(w_input.getRowCount(), w_input.getColumnCount());
 		Matrix vBInput = Matrix.Factory.zeros(b_input.getRowCount(), b_input.getColumnCount());
@@ -79,7 +87,8 @@ public class TestGru {
 		Matrix vWOutput = Matrix.Factory.zeros(w_output.getRowCount(), w_output.getColumnCount());
 		Matrix vBOutput = Matrix.Factory.zeros(b_output.getRowCount(), b_output.getColumnCount());
 		for (int t = 0; t < times; t++) {
-			ExecutorService exec = Executors.newFixedThreadPool(40);
+
+			ExecutorService exec = Executors.newFixedThreadPool(9);
 			for (int i = 0; i < matrixData.getRowCount() - xListSize; i++) {
 				List<Matrix> xList = new ArrayList<Matrix>();
 				List<Matrix> targetList = new ArrayList<Matrix>();
@@ -96,7 +105,7 @@ public class TestGru {
 				// target = matrixData.selectRows(Ret.LINK, i +
 				// xListSize).selectColumns(Ret.LINK, columns).transpose();
 				GruTrainThread thread = new GruTrainThread();
-				thread.build(w_input, b_input, w_hidden_list, w_output, b_output, xList, 1, targetList);
+				thread.build(w_input, b_input, w_hidden_list, b_hidden_list,w_output, b_output, xList, 1, targetList);
 				exec.execute(thread);
 			}
 			exec.shutdown();
@@ -105,13 +114,14 @@ public class TestGru {
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
-			Matrix d1 = gradList.get(0).get(0).times(0);
-			Matrix d2 = gradList.get(0).get(1).times(0);
-			Matrix d3 = gradList.get(0).get(2).times(0);
-			Matrix d4 = gradList.get(0).get(3).times(0);
-			Matrix d5 = gradList.get(0).get(4).times(0);
-			Matrix d6 = gradList.get(0).get(5).times(0);
-			Matrix d7 = gradList.get(0).get(6).times(0);
+
+			Matrix d1 = MyMatrixUtil.copyZerosMatrix(gradList.get(0).get(0));
+			Matrix d2 = MyMatrixUtil.copyZerosMatrix(gradList.get(0).get(1));
+			Matrix d3 = MyMatrixUtil.copyZerosMatrix(gradList.get(0).get(2));
+			Matrix d4 = MyMatrixUtil.copyZerosMatrix(gradList.get(0).get(3));
+			Matrix d5 = MyMatrixUtil.copyZerosMatrix(gradList.get(0).get(4));
+			Matrix d6 = MyMatrixUtil.copyZerosMatrix(gradList.get(0).get(5));
+			Matrix d7 = MyMatrixUtil.copyZerosMatrix(gradList.get(0).get(6));
 			for (int i = 0; i < gradList.size(); i++) {
 				List<Matrix> list = gradList.get(i);
 				d1 = d1.plus(list.get(0));
@@ -131,33 +141,33 @@ public class TestGru {
 			}
 			loss = l1 / loss1.size();
 			double onceLoss2 = l2 / loss2.size();
-
-			if (Math.abs(1 - loss / savedLoss) > 0.02) {
-				learning_rate = learning_rate * 0.5;
+			if (loss<savedLoss) {
+				learning_rate = learning_rate * 1.03;
 			} else {
-				if (Math.abs(1 - loss / savedLoss) < 0.005) {
-					learning_rate = learning_rate * 1.01;
-				}
-				vWInput = vWInput.times(r).plus(d6.plus(w_input.times(w_input.norm2() * lambda)).times(learning_rate));
-				vBInput = vBInput.times(r).plus(d7.plus(b_input.times(b_input.norm2() * lambda)).times(learning_rate));
-				vWz = vWz.times(r).plus(d3.plus(wf.times(wf.norm2() * lambda)).times(learning_rate));
-				vWr = vWr.times(r).plus(d4.plus(wi.times(wi.norm2() * lambda)).times(learning_rate));
-				vWo = vWo.times(r).plus(d5.plus(wc.times(wc.norm2() * lambda)).times(learning_rate));
-				vWOutput = vWOutput.times(r)
-						.plus(d1.plus(w_output.times(w_output.norm2() * lambda)).times(learning_rate));
-				vBOutput = vBOutput.times(r)
-						.plus(d2.plus(b_output.times(b_output.norm2() * lambda)).times(learning_rate));
-				w_input = w_input.minus(vWInput);
-				// System.out.println(d1);
-				// System.out.println(d1.norm2());
-				// b_input = b_input.minus(vBInput);
-				wf = wf.minus(vWz);
-				wi = wi.minus(vWr);
-				wc = wc.minus(vWo);
-				w_output = w_output.minus(vWOutput);
-				// b_output = b_output.minus(vBOutput);
-
+				learning_rate = learning_rate * 0.9;
 			}
+
+			vWInput = vWInput.times(r)
+					.plus(d6.plus(w_input.times(w_input.norm2() * lambda)).times(learning_rate * (1 - r)));
+			vBInput = vBInput.times(r)
+					.plus(d7.plus(b_input.times(b_input.norm2() * lambda)).times(learning_rate * (1 - r)));
+			vWz = vWz.times(r).plus(d3.plus(wf.times(wf.norm2() * lambda)).times(learning_rate * (1 - r)));
+			vWr = vWr.times(r).plus(d4.plus(wi.times(wi.norm2() * lambda)).times(learning_rate * (1 - r)));
+			vWo = vWo.times(r).plus(d5.plus(wc.times(wc.norm2() * lambda)).times(learning_rate * (1 - r)));
+			vWOutput = vWOutput.times(r)
+					.plus(d1.plus(w_output.times(w_output.norm2() * lambda)).times(learning_rate * (1 - r)));
+			vBOutput = vBOutput.times(r)
+					.plus(d2.plus(b_output.times(b_output.norm2() * lambda)).times(learning_rate * (1 - r)));
+			w_input = w_input.minus(vWInput);
+			// System.out.println(d1);
+			// System.out.println(d1.norm2());
+			b_input = b_input.minus(vBInput);
+			wf = wf.minus(vWz);
+			wi = wi.minus(vWr);
+			wc = wc.minus(vWo);
+			w_output = w_output.minus(vWOutput);
+			b_output = b_output.minus(vBOutput);
+
 			savedLoss = loss;
 
 			loss1.clear();
@@ -178,7 +188,6 @@ public class TestGru {
 
 		}
 		saveParameters();
-		saveRate(learning_rate);
 		saveLoss(savedLoss);
 		return savedLoss;
 	}
@@ -189,6 +198,9 @@ public class TestGru {
 		FileUtil.writeMatix(s3, wf);
 		FileUtil.writeMatix(s4, wi);
 		FileUtil.writeMatix(s5, wc);
+		FileUtil.writeMatix(s7, bf);
+		FileUtil.writeMatix(s8, bi);
+		FileUtil.writeMatix(s9, bc);
 		FileUtil.writeMatix(s11, w_output);
 		FileUtil.writeMatix(s12, b_output);
 	}

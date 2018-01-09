@@ -84,7 +84,7 @@ public class Test {
 		// predict(matrix, 240, 0.05, 12);
 		// System.out.println(FileUtil.readMatrix(s13).getAsDouble(0, 0));
 		// new Test().train(1, matrix, 0, 18);
-		new Test().train(10000, matrix, 0.05, 0.000001, 18);
+		new Test().train(1000, matrix, 0.05, 0.000001, 18);
 		// for (int i = 0; i < 35; i++) {
 		// System.out.println(46-i+" : "+new Test().train(4000, matrix, 0.05,0.00001,
 		// 46-i));
@@ -209,7 +209,7 @@ public class Test {
 		momentum.add(Matrix.Factory.zeros(w_hidden_list.get(0).getRowCount(), w_hidden_list.get(0).getColumnCount()));
 		momentum.add(Matrix.Factory.zeros(w_input.getRowCount(), w_input.getColumnCount()));
 		for (int t = 0; t < times; t++) {
-			ExecutorService exec = Executors.newFixedThreadPool(40);
+			ExecutorService exec = Executors.newFixedThreadPool(9);
 			for (int i = 0; i < matrixData.getRowCount() - xListSize; i++) {
 				List<Matrix> xList = new ArrayList<Matrix>();
 				Matrix target = Matrix.Factory.rand(1, 1);
@@ -230,13 +230,12 @@ public class Test {
 				thread.setOut(false);
 				exec.execute(thread);
 			}
-			exec.shutdown();
+			exec.shutdown();			
 			try {
 				exec.awaitTermination(2, TimeUnit.MINUTES);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
-			}
-
+			}		
 			for (int s = 0; s < loss.size(); s++) {
 				onceLoss += loss.get(s);
 			}

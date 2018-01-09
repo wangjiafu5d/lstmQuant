@@ -77,7 +77,7 @@ public class BackPass {
 		// System.out.println(delta_out);
 		Matrix delta_elu = Matrix.Factory.zeros(delta_out.getRowCount(), delta_out.getColumnCount());
 		Matrix grad_node = Matrix.Factory.zeros(w_output.getRowCount(), w_output.getColumnCount());
-		delta_elu = MathUtil.derivativeElu(out);
+		delta_elu = MathUtil.deriveElu(out);
 		grad_node = delta_out.times(delta_elu).mtimes(ht);
 		MathUtil.gradCheck(grad_node);
 		delta_ht = delta_out.times(delta_elu).transpose().mtimes(w_output);
@@ -169,7 +169,7 @@ public class BackPass {
 			Matrix grad_w_input = Matrix.Factory.zeros(w_input.getRowCount(), w_input.getColumnCount());
 			// System.out.println("delta "+delta_xt.transpose());
 			// System.err.println(xLis);
-			Matrix delta_elu = MathUtil.derivativeElu(xt);
+			Matrix delta_elu = MathUtil.deriveElu(xt);
 //			Matrix delta_elu = Matrix.Factory.ones(xt.getRowCount(),xt.getColumnCount()).minus(xt.times(xt));
 //			Matrix delta_elu = xt.times(Matrix.Factory.ones(xt.getRowCount(),xt.getColumnCount()).minus(xt));
 			grad_w_input = delta_xt.times(delta_elu).transpose().mtimes(lastInput.transpose());

@@ -46,7 +46,7 @@ public class GruBackwardPass {
 		Matrix deltaOut = out.minus(target);
 		Matrix deltaElu = Matrix.Factory.zeros(deltaOut.getRowCount(), deltaOut.getColumnCount());
 		Matrix gradWOutput = Matrix.Factory.zeros(wOutput.getRowCount(), wOutput.getColumnCount());
-		deltaElu = MathUtil.derivativeElu(out);
+		deltaElu = MathUtil.deriveElu(out);
 		Matrix gradBOutput = deltaOut.times(deltaElu).transpose();
 		gradWOutput = gradBOutput.mtimes(ht);
 		// MathUtil.gradCheck(gradNode);
@@ -122,7 +122,7 @@ public class GruBackwardPass {
 		Matrix gradWInput = Matrix.Factory.zeros(0, 0);
 		Matrix gradBInput = Matrix.Factory.zeros(0, 0);
 		if (null != deltaXEncoded) {
-			Matrix deltaElu = MathUtil.derivativeElu(xEncoded);
+			Matrix deltaElu = MathUtil.deriveElu(xEncoded);
 //			Matrix deltaElu = Matrix.Factory.ones(xEncoded.getRowCount(),xEncoded.getColumnCount()).minus(xEncoded.times(xEncoded));
 			gradBInput = deltaXEncoded.times(deltaElu).transpose();
 			gradWInput = gradBInput.mtimes(xInput.transpose());

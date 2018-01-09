@@ -15,8 +15,11 @@ public class GruCell {
 	private Matrix rt;
 	private Matrix htCell;
 	private Matrix ht;
+	private Matrix bz;
+	private Matrix br;
+	private Matrix bo;
 
-	public static GruCell build(final Matrix wz, final Matrix wr, final Matrix wo, final Matrix htPre,
+	public static GruCell build(final Matrix wz, final Matrix wr, final Matrix wo, final Matrix bz, final Matrix br, final Matrix bo,final Matrix htPre,
 			final Matrix xt) {
 		GruCell gruCell = new GruCell();
 		gruCell.wz = wz;
@@ -24,15 +27,18 @@ public class GruCell {
 		gruCell.wo = wo;
 		gruCell.htPre = htPre;
 		gruCell.xt = xt;
+		gruCell.bz = bz;
+		gruCell.br = br;
+		gruCell.bo = bo;
 
 		return gruCell;
 	}
 
 	public Matrix gruOut() {
 		Matrix htPreAppendXt = htPre.appendVertically(Ret.LINK, xt);
-		zt = MathUtil.sigmoid(wz.mtimes(htPreAppendXt));
-		rt = MathUtil.sigmoid(wr.mtimes(htPreAppendXt));
-		htCell = wo.mtimes(rt.times(htPre).appendVertically(Ret.LINK, xt)).tanh();
+		zt = MathUtil.sigmoid(wz.mtimes(htPreAppendXt).plus(bz));
+		rt = MathUtil.sigmoid(wr.mtimes(htPreAppendXt).plus(br));
+		htCell = wo.mtimes(rt.times(htPre).appendVertically(Ret.LINK, xt)).plus(bo).tanh();
 		ht = Matrix.Factory.ones(zt.getRowCount(), zt.getColumnCount()).minus(zt).times(htPre).plus(zt.times(htCell));
 
 		return ht;

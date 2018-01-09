@@ -11,17 +11,19 @@ public class GruTrainThread extends Thread {
 	private Matrix wInput;
 	private Matrix bInput;
 	private List<Matrix> wHiddenList;
+	private List<Matrix> bHiddenList;
 	private Matrix wOutput;
 	private Matrix bOutput;
 	private List<Matrix> xList;
 	private int outputSize;
 	private List<Matrix> targetList;
 
-	public void build(Matrix wInput, Matrix bInput, List<Matrix> wHiddenList, Matrix wOutput, Matrix bOutput,
+	public void build(Matrix wInput, Matrix bInput, List<Matrix> wHiddenList,List<Matrix> bHiddenList, Matrix wOutput, Matrix bOutput,
 			List<Matrix> xList, int outputSize, List<Matrix> targetList) {
 		this.wInput = wInput;
 		this.bInput = bInput;
 		this.wHiddenList = wHiddenList;
+		this.bHiddenList = bHiddenList;
 		this.wOutput = wOutput;
 		this.bOutput = bOutput;
 		this.xList = xList;
@@ -31,7 +33,7 @@ public class GruTrainThread extends Thread {
 
 	@Override
 	public void run() {
-		GruForwardPass gruForwardPass = GruForwardPass.build(wInput, bInput, wHiddenList, wOutput, bOutput, xList);
+		GruForwardPass gruForwardPass = GruForwardPass.build(wInput, bInput, wHiddenList,bHiddenList, wOutput, bOutput, xList);
 		gruForwardPass.run(outputSize);
 		List<Matrix> gradSumList = new ArrayList<Matrix>();
 		List<Matrix> resultList = gruForwardPass.getResultList();

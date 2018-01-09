@@ -11,6 +11,7 @@ public class GruForwardPass {
 	private Matrix w_output;
 	private Matrix b_output;
 	private List<Matrix> w_hidden_list;
+	private List<Matrix> b_hidden_list;
 	private Matrix w_input;
 	private Matrix b_input;
 	private List<Matrix> xList;
@@ -18,11 +19,12 @@ public class GruForwardPass {
 	private List<GruCell> gruLsit = new ArrayList<GruCell>();	
 	private List<Matrix> htList = new ArrayList<Matrix>();
 	public static GruForwardPass build(final Matrix w_input, final Matrix b_input, final List<Matrix> w_hidden_list,
-			final Matrix w_output, final Matrix b_output,final List<Matrix> xList) {
+			final List<Matrix> b_hidden_list,final Matrix w_output, final Matrix b_output,final List<Matrix> xList) {
 		GruForwardPass gruForwardPass = new GruForwardPass();
 		gruForwardPass.w_input = w_input;
 		gruForwardPass.b_input = b_input;
 		gruForwardPass.w_hidden_list = w_hidden_list;
+		gruForwardPass.b_hidden_list = b_hidden_list;
 		gruForwardPass.w_output = w_output;
 		gruForwardPass.b_output = b_output;
 		gruForwardPass.xList = xList;
@@ -31,7 +33,7 @@ public class GruForwardPass {
 
 	public void run(final int outputSize) {
 		inputLayer = InputLayer.build(w_input, b_input, xList);
-		gruLayer = GruLayer.build(w_hidden_list.get(0), w_hidden_list.get(1), w_hidden_list.get(2),
+		gruLayer = GruLayer.build(w_hidden_list.get(0), w_hidden_list.get(1), w_hidden_list.get(2),b_hidden_list.get(0), b_hidden_list.get(1), b_hidden_list.get(2),
 				inputLayer.out_list);
 		gruLsit = gruLayer.getGruCellList();
 		htList = gruLayer.out(outputSize);		
