@@ -1,13 +1,9 @@
 package com.qq.mail271127035;
-
-import java.util.ArrayList;
 import java.util.List;
 
 import org.ujmp.core.Matrix;
 
 import com.qq.mail271127035.util.MyMatrixUtil;
-
-import test.TestGru;
 
 public class GruTrainThread extends Thread {
 	private Matrix wInput;
