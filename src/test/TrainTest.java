@@ -10,7 +10,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -49,7 +48,7 @@ public class TrainTest {
 				matrix[i] = list.get(i);
 				
 			}
-			m = Matrix.Factory.importFromArray(matrix);			
+				
 			m = m.times(10.0);
 			for (int i = 0; i <m.getRowCount(); i++) {
 				for (int j = 0; j < m.getColumnCount(); j++) {

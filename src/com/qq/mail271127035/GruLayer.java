@@ -5,6 +5,8 @@ import java.util.List;
 
 import org.ujmp.core.Matrix;
 
+import com.qq.mail271127035.util.MyMatrixUtil;
+
 public class GruLayer {
 	private Matrix wz;
 	private Matrix wr;
@@ -29,7 +31,7 @@ public class GruLayer {
 	}
 
 	public List<Matrix> out(int outputSize) {
-		Matrix htPre = Matrix.Factory.zeros(xList.get(0).getRowCount(), xList.get(0).getColumnCount());
+		Matrix htPre = MyMatrixUtil.copyZerosMatrix(xList.get(0));
 
 		for (int i = 0; i < xList.size(); i++) {
 			GruCell gruCell = GruCell.build(wz, wr, wo, bz,br,bo, htPre, xList.get(i));

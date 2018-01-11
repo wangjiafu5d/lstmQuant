@@ -1,8 +1,6 @@
 package test;
 
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
@@ -13,12 +11,10 @@ import java.util.concurrent.TimeUnit;
 
 import org.ujmp.core.Matrix;
 import org.ujmp.core.calculation.Calculation.Ret;
-import org.ujmp.gui.actions.SVDAction;
 
 import com.qq.mail271127035.ForwardPass;
 import com.qq.mail271127035.TrainThread;
 import com.qq.mail271127035.util.FileUtil;
-import com.qq.mail271127035.util.MathUtil;
 
 public class Test {
 	private static double onceLoss = 0.0;
@@ -216,10 +212,10 @@ public class Test {
 				for (int j = 0; j < xListSize; j++) {
 					xList.add(matrixData.selectRows(Ret.LINK, i + j).transpose());
 				}				
-				target = matrixData.selectRows(Ret.LINK, i + xListSize).selectColumns(Ret.LINK, 3);
-				// long[] columns = {1,2};
-				// target = matrixData.selectRows(Ret.LINK, i +
-				// xListSize).selectColumns(Ret.LINK, columns).transpose();
+//				target = matrixData.selectRows(Ret.LINK, i + xListSize).selectColumns(Ret.LINK, 3);
+				 long[] columns = {1,2};
+				 target = matrixData.selectRows(Ret.LINK, i +
+				 xListSize).selectColumns(Ret.LINK, columns).transpose();
 				TrainThread thread = new TrainThread();
 				thread.setI(i);
 				thread.setLearning_rate(learning_rate);

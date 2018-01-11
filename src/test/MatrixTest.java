@@ -6,7 +6,6 @@ import java.util.Arrays;
 
 import org.ujmp.core.Matrix;
 import org.ujmp.core.calculation.Calculation.Ret;
-import com.qq.mail271127035.util.MathUtil;
 /**
  * FileName:MatrixTest.java
  * 测试UJMP包的矩阵运算

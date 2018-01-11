@@ -4,6 +4,7 @@ import org.ujmp.core.Matrix;
 import org.ujmp.core.calculation.Calculation.Ret;
 
 import com.qq.mail271127035.util.MathUtil;
+import com.qq.mail271127035.util.MyMatrixUtil;
 
 public class GruCell {
 	private Matrix wz;
@@ -39,7 +40,7 @@ public class GruCell {
 		zt = MathUtil.sigmoid(wz.mtimes(htPreAppendXt).plus(bz));
 		rt = MathUtil.sigmoid(wr.mtimes(htPreAppendXt).plus(br));
 		htCell = wo.mtimes(rt.times(htPre).appendVertically(Ret.LINK, xt)).plus(bo).tanh();
-		ht = Matrix.Factory.ones(zt.getRowCount(), zt.getColumnCount()).minus(zt).times(htPre).plus(zt.times(htCell));
+		ht = MyMatrixUtil.copyOnesMatrix(zt).minus(zt).times(htPre).plus(zt.times(htCell));
 
 		return ht;
 	}

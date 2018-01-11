@@ -16,7 +16,7 @@ public class MathUtil {
 		return y;
 	}
 
-	// 激活函数MPELU，y = max(α*e^βx - 1)
+	// 激活函数MPELU，y = max(α*(e^βx - 1),x)
 	public static double mpelu(final double alpha, final double beta, final double x) {
 		double y = 0.0;
 		if (x > 0) {

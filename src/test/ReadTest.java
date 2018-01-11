@@ -3,11 +3,9 @@ package test;
 import org.ujmp.core.Matrix;
 import org.ujmp.core.calculation.Calculation.Ret;
 
-import com.qq.mail271127035.util.FileUtil;
-
 public class ReadTest {
 	public static void main(String[] args) {
-		Matrix matrix = FileUtil.readMatrix("C:/Users/chuan/Desktop/data2.txt");
+//		Matrix matrix = FileUtil.readMatrix("C:/Users/chuan/Desktop/data2.txt");
 //		System.out.println(matrix);
 		int i = 0;
 		for (int j = 0; j < 6; j++) {

@@ -7,6 +7,7 @@ import org.ujmp.core.Matrix;
 import org.ujmp.core.calculation.Calculation.Ret;
 
 import com.qq.mail271127035.util.MathUtil;
+import com.qq.mail271127035.util.MyMatrixUtil;
 
 public class GruBackwardPass {
 	private Matrix out;
@@ -42,16 +43,16 @@ public class GruBackwardPass {
 	}
 
 	private Matrix backTrainOutputLayer(final Matrix wOutput, final Matrix ht) {
-		deltaHt = Matrix.Factory.zeros(ht.getRowCount(), ht.getColumnCount());
+		deltaHt = MyMatrixUtil.copyZerosMatrix(ht);
+		Matrix gradWOutput = MyMatrixUtil.copyZerosMatrix(wOutput);
+		Matrix gradBOutput = MyMatrixUtil.copyZerosMatrix(out);
 		Matrix deltaOut = out.minus(target);
-		Matrix deltaElu = Matrix.Factory.zeros(deltaOut.getRowCount(), deltaOut.getColumnCount());
-		Matrix gradWOutput = Matrix.Factory.zeros(wOutput.getRowCount(), wOutput.getColumnCount());
+		Matrix deltaElu = MyMatrixUtil.copyZerosMatrix(deltaOut);
 		deltaElu = MathUtil.deriveElu(out);
-		Matrix gradBOutput = deltaOut.times(deltaElu).transpose();
+		gradBOutput = deltaOut.times(deltaElu);
 		gradWOutput = gradBOutput.mtimes(ht);
-		// MathUtil.gradCheck(gradNode);
-		deltaHt = deltaHtNext.plus(deltaOut.times(deltaElu).mtimes(wOutput));
-		// delta_ht = MathUtil.gradCheck(delta_ht);
+		
+		deltaHt = deltaHtNext.plus(deltaOut.times(deltaElu).transpose().mtimes(wOutput));		
 		gradList.add(gradWOutput);
 		gradList.add(gradBOutput);
 		return gradWOutput;
@@ -70,12 +71,13 @@ public class GruBackwardPass {
 		Matrix xEncoded = gruCell.getXt();
 
 		// deltaHtPre0 = delta_ht * (1-zt)
-		Matrix deltaHtPre0 = deltaHt.times(Matrix.Factory.ones(zt.getRowCount(), zt.getColumnCount()).minus(zt));
+		Matrix deltaHtPre0 = deltaHt.times(MyMatrixUtil.copyOnesMatrix(zt).minus(zt));
 		// deltaWo = (delta_ht * zt * (1 - htCell^2)) × [rt * ht-1,xt]转置
-		Matrix ele0 = Matrix.Factory.ones(htCell.getRowCount(), htCell.getColumnCount()).minus(htCell).times(htCell);
+		Matrix ele0 = MyMatrixUtil.copyOnesMatrix(htCell).minus(htCell.times(htCell));
 		Matrix ele1 = deltaHt.times(zt).times(ele0);
 		Matrix ele2 = rt.times(htPrev).appendVertically(Ret.LINK, xEncoded);
 		Matrix gradWo = ele1.mtimes(ele2.transpose());
+		Matrix gradBo = ele1;
 		// deltaX0 = wo转置 × (delta_ht * zt * (1 - htCell^2));
 		// deltaHtPre1 = rt * deltaX3.selectRows(0);
 		// deltaXt0 = deltaX3.selectRows(1);
@@ -90,8 +92,9 @@ public class GruBackwardPass {
 		// deltaHtPre2 = deltaX1.selectRows(0);
 		// deltaXt1 = deltaX1.selectRows(1);
 		Matrix ele3 = htPrev.appendVertically(Ret.LINK, xEncoded).transpose();
-		Matrix ele4 = deltaRt.times(rt).times(Matrix.Factory.ones(rt.getRowCount(), rt.getColumnCount()).minus(rt));
+		Matrix ele4 = deltaRt.times(rt).times(MyMatrixUtil.copyOnesMatrix(rt).minus(rt));
 		Matrix gradWr = ele4.mtimes(ele3);
+		Matrix gradBr = ele4;
 		Matrix deltaX1 = wr.transpose().mtimes(ele4);
 		Matrix deltaHtPre2 = deltaX1.selectRows(Ret.LINK, 0);
 		Matrix deltaXt1 = deltaX1.selectRows(Ret.LINK, 1);
@@ -102,8 +105,9 @@ public class GruBackwardPass {
 		// deltaHtPre3 = deltaX1.selectRows(0);
 		// deltaXt2 = deltaX1.selectRows(1);
 		Matrix deltaZt = deltaHt.times(htCell.minus(htPrev));
-		Matrix ele5 = deltaZt.times(zt).times(Matrix.Factory.ones(zt.getRowCount(), zt.getColumnCount()).minus(zt));
+		Matrix ele5 = deltaZt.times(zt).times(MyMatrixUtil.copyOnesMatrix(zt).minus(zt));
 		Matrix gradWz = ele5.mtimes(ele3);
+		Matrix gradBz = ele5;
 		Matrix deltaX2 = wz.transpose().mtimes(ele5);
 		Matrix deltaHtPre3 = deltaX2.selectRows(Ret.LINK, 0);
 		Matrix deltaXt2 = deltaX2.selectRows(Ret.LINK, 1);
@@ -113,7 +117,9 @@ public class GruBackwardPass {
 		gradList.add(gradWz);
 		gradList.add(gradWr);
 		gradList.add(gradWo);
-
+		gradList.add(gradBz);
+		gradList.add(gradBr);
+		gradList.add(gradBo);
 		return gradList;
 	}
 

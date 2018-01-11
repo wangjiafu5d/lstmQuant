@@ -33,8 +33,12 @@ public class GruForwardPass {
 
 	public void run(final int outputSize) {
 		inputLayer = InputLayer.build(w_input, b_input, xList);
+		List<Matrix> inputList = new ArrayList<>();
+		for (Matrix matrix : inputLayer.out_list) {
+			inputList.add(matrix.transpose());
+		}
 		gruLayer = GruLayer.build(w_hidden_list.get(0), w_hidden_list.get(1), w_hidden_list.get(2),b_hidden_list.get(0), b_hidden_list.get(1), b_hidden_list.get(2),
-				inputLayer.out_list);
+				inputList);
 		gruLsit = gruLayer.getGruCellList();
 		htList = gruLayer.out(outputSize);		
 		for (int i = 0; i <htList.size(); i++) {

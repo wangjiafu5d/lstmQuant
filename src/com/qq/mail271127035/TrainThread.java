@@ -52,7 +52,7 @@ public class TrainThread extends Thread {
 		List<Matrix> last_cell_result = lstmLayer.cells_result.get(lstmLayer.cells_result.size() - 1);
 		BackPass backPass = new BackPass().build(ht, out, ct_out, ct_prev, ht_prev, last_cell_result, momentum, target,
 				learning_rate, lambda);
-		Matrix xt = forwardPass.getInputLayer().out_list.get(forwardPass.getInputLayer().out_list.size() - 1);
+		Matrix xt = forwardPass.getInputLayer().out_list.get(forwardPass.getInputLayer().out_list.size() - 1).transpose();
 		trained_list = backPass.backTrain(Test.w_output, Test.w_hidden_list, Test.w_input, xt, xList);
 		Test.trainedVectorLists.add(trained_list);
 		Test.vt.add(backPass.getVt());

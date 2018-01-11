@@ -1,5 +1,6 @@
 package com.qq.mail271127035;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.ujmp.core.Matrix;
@@ -22,7 +23,11 @@ public class ForwardPass {
 		if (null != w_output && null != b_output && null != w_hidden_list && null != b_hidden_list && null != w_input
 				&& null != b_input && null != xList) {
 			inputLayer = InputLayer.build(w_input, b_input, xList);
-			lstmLayer = LstmLayer.build(w_hidden_list, b_hidden_list, inputLayer.out_list);
+			List<Matrix> inputList = new ArrayList<>();
+			for (Matrix matrix : inputLayer.out_list) {
+				inputList.add(matrix.transpose());
+			}
+			lstmLayer = LstmLayer.build(w_hidden_list, b_hidden_list, inputList);
 			outputLayer = OutputLayer.build(w_output, b_output,
 					lstmLayer.ht_out_list.get(lstmLayer.ht_out_list.size() - 1).transpose());
 		} else {

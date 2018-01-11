@@ -46,7 +46,7 @@ public class InputCell {
 
 		}
 
-		return out.transpose();
+		return out;
 	}
 
 	/**
